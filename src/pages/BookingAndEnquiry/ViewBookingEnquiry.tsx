@@ -1,6 +1,6 @@
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import BreadCrump from "../../component/BreadCrump/BreadCrump";
-import { ArrowLeft, Mail, Phone, Calendar, User, MessageSquare, MapPin, Package, GraduationCap, IdCard, RefreshCw } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Calendar, User, MessageSquare, MapPin, Package, GraduationCap, IdCard, RefreshCw, UserCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getOrderById, type OrderRow } from "../../service/orderApi";
 import { getServiceEnrollmentById, type ServiceEnrollmentRow } from "../../service/serviceEnrollmentApi";
@@ -8,9 +8,26 @@ import { getCourseEnrollmentById, type CourseEnrollmentRow } from "../../service
 import { getRpcById, type RpcEnquiryRow } from "../../service/rpcApi";
 import { type OrderReplacementRow } from "../../service/replacementApi";
 import { getAppointmentById, type AppointmentRow } from "../../service/appointmentApi";
+import { type LeadType } from "../../service/leadApi";
+
+// RPC uses its own dedicated assign/remarks flow (separate backend endpoints)
+import RpcAssignLeadModal from "../../component/RpcLead/AssignLeadModal";
+import RpcRemarksPanel from "../../component/RpcLead/RemarksPanel";
+
+// Product/Service/Course/Appointment/Replacement use the generic lead-assignment flow
+import GenericAssignLeadModal from "../../component/LeadAssignment/AssignLeadModal";
+import GenericRemarksPanel from "../../component/LeadAssignment/RemarksPanel";
 
 type BookingType = "product" | "service" | "course" | "rpc" | "appointment" | "replacement";
 type BookingData = OrderRow | ServiceEnrollmentRow | CourseEnrollmentRow | RpcEnquiryRow | AppointmentRow | OrderReplacementRow;
+
+const genericLeadTypeMap: Partial<Record<BookingType, LeadType>> = {
+    product: "PRODUCT",
+    service: "SERVICE",
+    course: "COURSE",
+    appointment: "APPOINTMENT",
+    replacement: "REPLACEMENT",
+};
 
 const statusColor: Record<string, string> = {
     DELIVERED: "bg-green-100 text-green-700",
@@ -57,6 +74,8 @@ export default function ViewBookingEnquiry() {
 
     const [data, setData] = useState<BookingData | undefined>(initialData);
     const [loading, setLoading] = useState(true);
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+    const [currentAssigneeId, setCurrentAssigneeId] = useState<number | null>(null);
 
     const fetchLatest = async () => {
         if (!type || !id) return;
@@ -81,6 +100,13 @@ export default function ViewBookingEnquiry() {
     useEffect(() => {
         fetchLatest();
     }, [id, type]);
+
+    // For RPC, current assignee comes straight from the entity itself
+    useEffect(() => {
+        if (type === "rpc" && data) {
+            setCurrentAssigneeId((data as RpcEnquiryRow).assignedTo?.id ?? null);
+        }
+    }, [type, data]);
 
     const breadCrumpOption = [
         { id: 1, label: "Bookings & Enquiries", onClick: () => navigate(-1) },
@@ -110,6 +136,9 @@ export default function ViewBookingEnquiry() {
 
     const TypeIcon = typeIcon[type];
     const status = (data as any).status ?? (data as any).orderStatus;
+    const rpcData = type === "rpc" ? (data as RpcEnquiryRow) : null;
+    const genericLeadType = genericLeadTypeMap[type];
+    const entityId = (data as any).id as number;
 
     const renderFields = () => {
         if (type === "product") {
@@ -251,6 +280,11 @@ export default function ViewBookingEnquiry() {
                 <Field icon={User} label="Age / Gender" value={`${r.age} / ${r.gender}`} />
                 <Field icon={MapPin} label="Address" value={`${r.address}, ${r.city}, ${r.state} - ${r.postalCode}, ${r.country}`} />
                 <Field icon={Calendar} label="Submitted On" value={r.createdAt ? new Date(r.createdAt).toLocaleString("en-IN") : "-"} />
+                <Field
+                    icon={UserCheck}
+                    label="Assigned To"
+                    value={r.assignedTo ? `${r.assignedTo.name} (${r.assignedTo.email})` : "Unassigned"}
+                />
                 {r.adminNotes && (
                     <div className="md:col-span-2">
                         <label className="text-sm font-semibold text-gray-600 dark:text-gray-400">Admin Notes</label>
@@ -291,18 +325,50 @@ export default function ViewBookingEnquiry() {
                     {renderFields()}
                 </div>
 
-                <div className="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex-wrap">
                     <button
                         onClick={() => navigate(`../edit-booking/${id}`, { state: { type, data } })}
                         className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
                     >
                         Update Status
                     </button>
+                    <button
+                        onClick={() => setAssignModalOpen(true)}
+                        className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium flex items-center gap-2"
+                    >
+                        <UserCheck size={18} />
+                        {currentAssigneeId ? "Reassign Lead" : "Assign Lead"}
+                    </button>
                     <button onClick={() => navigate(-1)} className="px-6 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors font-medium">
                         Go Back
                     </button>
                 </div>
             </section>
+
+            {/* Remarks history — RPC uses its dedicated flow, others use the generic one */}
+            {type === "rpc" && rpcData && <RpcRemarksPanel rpcId={rpcData.id} />}
+            {type !== "rpc" && genericLeadType && <GenericRemarksPanel leadType={genericLeadType} entityId={entityId} />}
+
+            {/* Assign modal — RPC uses its dedicated flow, others use the generic one */}
+            {type === "rpc" && rpcData && (
+                <RpcAssignLeadModal
+                    open={assignModalOpen}
+                    rpcId={rpcData.id}
+                    currentAssigneeId={rpcData.assignedTo?.id ?? null}
+                    onClose={() => setAssignModalOpen(false)}
+                    onAssigned={fetchLatest}
+                />
+            )}
+            {type !== "rpc" && genericLeadType && (
+                <GenericAssignLeadModal
+                    open={assignModalOpen}
+                    leadType={genericLeadType}
+                    entityId={entityId}
+                    currentAssigneeId={currentAssigneeId}
+                    onClose={() => setAssignModalOpen(false)}
+                    onAssigned={fetchLatest}
+                />
+            )}
         </main>
     );
 }

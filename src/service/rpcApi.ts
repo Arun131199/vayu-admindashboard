@@ -3,6 +3,12 @@ import type { ServiceEnrollmentRow } from "./serviceEnrollmentApi";
 
 export type EnrollmentStatus = "PENDING" | "REJECTED" | "UNDER_REVIEW" | "PAYMENT_APPROVED" | "PAYMENT_PENDING" | "ENROLLED" | "COMPLETED" | "DROPPED";
 
+export interface AssignedEmployee {
+  id: number;
+  name: string;
+  email: string;
+}
+
 export interface RpcEnquiryRow {
   id: number;
   enrollmentId: string;
@@ -20,6 +26,16 @@ export interface RpcEnquiryRow {
   adminNotes: string;
   createdAt: string;
   updatedAt: string;
+  assignedTo?: AssignedEmployee | null;
+  assignedAt?: string | null;
+}
+
+export interface RemarkRow {
+  id: number;
+  remark: string;
+  employeeId: number;
+  employeeName: string;
+  createdAt: string;
 }
 
 export const getAllRpcEnquiries = async (): Promise<RpcEnquiryRow[]> => {
@@ -78,4 +94,26 @@ export const downloadRpcImportTemplate = async () => {
   link.click();
   link.remove();
   window.URL.revokeObjectURL(url);
+};
+
+// ===== NEW: Lead assignment & remarks =====
+
+export const assignRpcLead = async (id: number, employeeId: number) => {
+  const res = await api.patch(`v1/rpce-enroll/${id}/assign`, { employeeId });
+  return res.data;
+};
+
+export const addRpcRemark = async (id: number, remark: string) => {
+  const res = await api.post(`v1/rpce-enroll/${id}/remarks`, { remark });
+  return res.data;
+};
+
+export const getRpcRemarks = async (id: number): Promise<RemarkRow[]> => {
+  const res = await api.get(`v1/rpce-enroll/${id}/remarks`);
+  return res.data?.data ?? [];
+};
+
+export const getMyAssignedLeads = async (): Promise<RpcEnquiryRow[]> => {
+  const res = await api.get("v1/rpce-enroll/my-leads");
+  return res.data?.data ?? [];
 };

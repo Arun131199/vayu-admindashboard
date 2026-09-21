@@ -1,4 +1,4 @@
-import { Calculator, CalendarRange, MessageCircleIcon, ShoppingBag, IdCard, type LucideIcon, Calendar, RefreshCw } from "lucide-react";
+import { Calculator, CalendarRange, MessageCircleIcon, ShoppingBag, IdCard, type LucideIcon, Calendar, RefreshCw, UserCheck } from "lucide-react";
 import StatusCard from "../../../component/Cards/StatusCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -11,8 +11,17 @@ import { getAllCourseEnrollments, type CourseEnrollmentRow } from "../../../serv
 import { getAllRpcEnquiries, type RpcEnquiryRow } from "../../../service/rpcApi";
 import { getAllAppointments, type AppointmentRow } from "./../../../service/appointmentApi";
 import { getAllReplacements, type OrderReplacementRow } from "../../../service/replacementApi";
+import { getAllLeadAssignments, type LeadAssignment, type LeadType } from "../../../service/leadApi";
 
 type TabKey = "products" | "services" | "courses" | "rpc" | "appointments" | "replacements";
+
+const tabToLeadType: Partial<Record<TabKey, LeadType>> = {
+    products: "PRODUCT",
+    services: "SERVICE",
+    courses: "COURSE",
+    appointments: "APPOINTMENT",
+    replacements: "REPLACEMENT",
+};
 
 const orderStatusBadge: Record<string, string> = {
     DELIVERED: "bg-green-100 text-green-700",
@@ -37,6 +46,29 @@ const enrollmentStatusBadge: Record<string, string> = {
     DROPPED: "bg-red-100 text-red-700",
 };
 
+// Generic "Assigned To" column — reused across product/service/course/appointment/replacement tables
+function assignedToColumn<T extends { id: number }>(assignments: Record<number, LeadAssignment>): ColumnDef<T> {
+    return {
+        key: "assignedTo",
+        header: "Assigned To",
+        accessor: (row) => assignments[row.id]?.employeeName ?? "Unassigned",
+        widthClassName: "min-w-[160px]",
+        cell: (row) => {
+            const a = assignments[row.id];
+            return a ? (
+                <div className="flex flex-col">
+                    <span className="font-medium text-gray-900 dark:text-white">{a.employeeName}</span>
+                    <span className="text-xs text-gray-500">{a.employeeEmail}</span>
+                </div>
+            ) : (
+                <span className="inline-flex justify-center rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-500">
+                    Unassigned
+                </span>
+            );
+        },
+    };
+}
+
 export default function BookingMain() {
     const navigate = useNavigate();
 
@@ -52,6 +84,23 @@ export default function BookingMain() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [replacements, setReplacements] = useState<OrderReplacementRow[]>([]);
+    const [assignments, setAssignments] = useState<Record<number, LeadAssignment>>({});
+
+    const loadAssignments = useCallback(async (tab: TabKey) => {
+        const leadType = tabToLeadType[tab];
+        if (!leadType) {
+            setAssignments({});
+            return;
+        }
+        try {
+            const data = await getAllLeadAssignments(leadType);
+            const map: Record<number, LeadAssignment> = {};
+            data.forEach((a) => { map[a.entityId] = a; });
+            setAssignments(map);
+        } catch (err) {
+            console.error("Failed to load assignments", err);
+        }
+    }, []);
 
     const loadOrders = useCallback(async () => {
         setLoading(true);
@@ -136,6 +185,8 @@ export default function BookingMain() {
         else if (activeTab === "appointments") loadAppointments();
         else if (activeTab === "replacements") loadReplacements();
         else loadRpcEnquiries();
+
+        loadAssignments(activeTab);
     }, [activeTab]);
 
     useEffect(() => {
@@ -145,10 +196,11 @@ export default function BookingMain() {
             else if (activeTab === "courses") loadCourseEnrollments();
             else if (activeTab === "appointments") loadAppointments();
             else loadRpcEnquiries();
+            loadAssignments(activeTab);
         };
         window.addEventListener("booking-updated", handleBookingUpdated);
         return () => window.removeEventListener("booking-updated", handleBookingUpdated);
-    }, [activeTab, loadOrders, loadServiceEnrollments, loadCourseEnrollments, loadAppointments, loadRpcEnquiries]);
+    }, [activeTab, loadOrders, loadServiceEnrollments, loadCourseEnrollments, loadAppointments, loadRpcEnquiries, loadAssignments]);
 
     const handleTabChange = (tab: TabKey) => {
         setActiveTab(tab);
@@ -262,7 +314,8 @@ export default function BookingMain() {
                 </span>
             )
         },
-    ], []);
+        assignedToColumn<OrderRow>(assignments),
+    ], [assignments]);
 
     const serviceColumns = useMemo<ColumnDef<ServiceEnrollmentRow>[]>(() => [
         { key: "serviceEnrollmentId", header: "Booking ID", sortable: true, accessor: "serviceEnrollmentId", widthClassName: "w-32" },
@@ -311,8 +364,9 @@ export default function BookingMain() {
                     {row.status}
                 </span>
             )
-        }
-    ], []);
+        },
+        assignedToColumn<ServiceEnrollmentRow>(assignments),
+    ], [assignments]);
 
     const courseColumns = useMemo<ColumnDef<CourseEnrollmentRow>[]>(() => [
         { key: "enrollmentId", header: "Enrollment ID", sortable: true, accessor: "enrollmentId", widthClassName: "w-32" },
@@ -371,7 +425,8 @@ export default function BookingMain() {
                 </span>
             )
         },
-    ], []);
+        assignedToColumn<CourseEnrollmentRow>(assignments),
+    ], [assignments]);
 
     const rpcColumns = useMemo<ColumnDef<RpcEnquiryRow>[]>(() => [
         { key: "enrollmentId", header: "Enquiry ID", sortable: true, accessor: "enrollmentId", widthClassName: "w-32" },
@@ -408,6 +463,25 @@ export default function BookingMain() {
                     {row.status}
                 </span>
             )
+        },
+        {
+            key: "assignedTo",
+            header: "Assigned To",
+            sortable: true,
+            accessor: (row) => row.assignedTo?.name ?? "Unassigned",
+            widthClassName: "min-w-[160px]",
+            cell: (row) => (
+                row.assignedTo ? (
+                    <div className="flex flex-col">
+                        <span className="font-medium text-gray-900 dark:text-white">{row.assignedTo.name}</span>
+                        <span className="text-xs text-gray-500">{row.assignedTo.email}</span>
+                    </div>
+                ) : (
+                    <span className="inline-flex justify-center rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-500">
+                        Unassigned
+                    </span>
+                )
+            )
         }
     ], []);
 
@@ -427,7 +501,7 @@ export default function BookingMain() {
         { id: 6, value: "replacements", label: "Replacements", icon: RefreshCw },
     ];
 
-    const appointmentColumns: ColumnDef<AppointmentRow>[] = [
+    const appointmentColumns = useMemo<ColumnDef<AppointmentRow>[]>(() => [
         { key: "appointmentId", header: "Appointment ID", accessor: "appointmentId", widthClassName: "w-36" },
         { key: "fullName", header: "Name", accessor: "fullName", widthClassName: "w-40" },
         { key: "mobile", header: "Mobile", accessor: "mobile", widthClassName: "w-32" },
@@ -450,9 +524,10 @@ export default function BookingMain() {
                 </span>
             )
         },
-    ];
+        assignedToColumn<AppointmentRow>(assignments),
+    ], [assignments]);
 
-    const replacementColumns: ColumnDef<OrderReplacementRow>[] = [
+    const replacementColumns = useMemo<ColumnDef<OrderReplacementRow>[]>(() => [
         { key: "replacementId", header: "Request ID", accessor: "replacementId", widthClassName: "w-36" },
         { key: "orderId", header: "Order ID", accessor: "orderId", widthClassName: "w-32" },
         { key: "reason", header: "Reason", accessor: "reason", widthClassName: "w-64" },
@@ -477,24 +552,30 @@ export default function BookingMain() {
                 </span>
             )
         },
-    ];
+        assignedToColumn<OrderReplacementRow>(assignments),
+    ], [assignments]);
 
     const handleRefersh = async () => {
         switch (activeTab) {
             case "products":
                 const res = await loadOrders();
+                loadAssignments(activeTab);
                 return res;
             case "services":
                 const ser = await loadServiceEnrollments();
+                loadAssignments(activeTab);
                 return ser;
             case "courses":
                 const cour = await loadCourseEnrollments();
+                loadAssignments(activeTab);
                 return cour;
             case "appointments":
                 const app = await loadAppointments();
+                loadAssignments(activeTab);
                 return app;
             case "replacements":
                 const replace = await loadReplacements();
+                loadAssignments(activeTab);
                 return replace;
             case "rpc":
                 const rpc = await loadRpcEnquiries();

@@ -1,7 +1,7 @@
 import { Upload, Trash2, Filter, X } from "lucide-react";
 import BreadCrump from "../../component/BreadCrump/BreadCrump";
 import { useState, useRef, useEffect } from "react";
-import galleryDummyData from "../../utils/dummydata/galleryData";
+
 
 type imageType = {
     id: number;
@@ -35,7 +35,7 @@ const filterTypeData = [
 ]
 
 export default function Gallery() {
-    const [gallery, setGallery] = useState<imageType[]>(galleryDummyData);
+    const [gallery, setGallery] = useState<imageType[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [getFilterType, setFilterType] = useState("all");
