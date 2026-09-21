@@ -1,0 +1,45 @@
+// Standard usage
+<ConfirmationPopup
+    open={isOpen}
+    type="danger"
+    title="Delete Item"
+    message="Are you sure you want to delete this item? This action cannot be undone."
+    onConfirm={handleDelete}
+    onClose={() => setIsOpen(false)}
+/>
+
+// Auto-close success message
+<ConfirmationPopup
+    open={isOpen}
+    type="success"
+    title="Saved!"
+    message="Your changes have been saved successfully."
+    onClose={() => setIsOpen(false)}
+    onConfirm={() => {}}
+    autoClose
+    showCancelButton={false}
+    confirmButtonText="Dismiss"
+    showProgressBar
+    progressDuration={3000}
+/>
+
+// Large popup with custom content
+<ConfirmationPopup
+    open={isOpen}
+    type="info"
+    title="Update Available"
+    message="A new version is available"
+    size="lg"
+    position="top"
+    onConfirm={handleUpdate}
+    onClose={() => setIsOpen(false)}
+>
+    <div className="space-y-2">
+        <p>Version 2.0.0 includes:</p>
+        <ul className="list-inside list-disc">
+            <li>New features</li>
+            <li>Bug fixes</li>
+            <li>Performance improvements</li>
+        </ul>
+    </div>
+</ConfirmationPopup>
