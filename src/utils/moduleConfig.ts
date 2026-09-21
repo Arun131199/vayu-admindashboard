@@ -32,7 +32,7 @@ export type UserPermission = {
     actions: Record<ModuleAction, boolean>;
 };
 
-export const buildEmptyActions = (moduleActions: ModuleAction[]): Record<ModuleAction, boolean> => {
+export const buildEmptyActions = (_moduleActions: ModuleAction[]): Record<ModuleAction, boolean> => {
     const result = {} as Record<ModuleAction, boolean>;
     allActionLabels.forEach((a) => {
         result[a.key] = false;

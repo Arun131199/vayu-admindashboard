@@ -1,4 +1,4 @@
-import { Eye, Pencil, Star, Trash2 } from "lucide-react";
+import { Eye, Star } from "lucide-react";
 import SkeletonBlock from "../Skeleton/SkeletonBlock";
 import useInitialLoading from "../../hooks/useInitialLoading";
 

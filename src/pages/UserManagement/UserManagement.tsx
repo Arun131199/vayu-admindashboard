@@ -35,7 +35,7 @@ export default function UserManagement() {
     const navigate = useNavigate();
     const [companyUsers, setCompanyUsers] = useState<CompanyUserRow[]>([]);
     const [loading, setLoading] = useState(true);
-    const [deleting, setDeleting] = useState(false);
+    const [_deleting, setDeleting] = useState(false);
 
     const loadUsers = async () => {
         setLoading(true);

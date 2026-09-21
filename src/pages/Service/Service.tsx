@@ -70,7 +70,7 @@ export default function Service() {
     const [rows, setRows] = useState<ServiceRow[]>([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+    const [_hasLoadedOnce, setHasLoadedOnce] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const statusData = useMemo(() => [

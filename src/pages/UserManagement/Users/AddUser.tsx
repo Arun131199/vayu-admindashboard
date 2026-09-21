@@ -7,8 +7,6 @@ import { useEffect } from "react";
 import { getCompanyUserById } from "../../../service/companyUserApi";
 import api from "../../../service/api";
 
-type PermissionKey = "canRead" | "canCreate" | "canDelete" | "canImport" | "canExport";
-
 type UserPermission = {
     module: string;
     label: string;
@@ -58,44 +56,6 @@ const allActionLabels: { key: ModuleAction; label: string }[] = [
     { key: "VIEW", label: "View" },
 ];
 
-const modules = [
-    "DASHBOARD",
-    "PRODUCT",
-    "ORDER",
-    "SERVICE",
-    "SERVICE_ENROLLMENT",
-    "COURSE",
-    "COURSE_ENROLLMENT",
-    "RPC",
-    "USER",
-    "COMPANY_USER",
-    "ROLE",
-    "STUDENT"
-];
-
-const permissionColumns: { key: PermissionKey; label: string }[] = [
-    { key: "canRead", label: "Read" },
-    { key: "canCreate", label: "Write" },
-    { key: "canDelete", label: "Delete" },
-    { key: "canImport", label: "Import" },
-    { key: "canExport", label: "Export" }
-];
-
-const buildEmptyActions = (moduleActions: ModuleAction[]): Record<ModuleAction, boolean> => {
-    const result = {} as Record<ModuleAction, boolean>;
-    allActionLabels.forEach((a) => {
-        result[a.key] = moduleActions.includes(a.key) ? false : false;
-    });
-    return result;
-};
-
-const initialPermissions: UserPermission[] = moduleConfig.map((m) => ({
-    module: m.key,
-    label: m.label,
-    actions: buildEmptyActions(m.actions),
-}));
-
-const toBooleanPermission = (value: string | boolean | undefined) => value === true || value === "Yes";
 
 const buildPermissions = (existingPermissions: any[] = []): UserPermission[] =>
     moduleConfig.map((m) => {

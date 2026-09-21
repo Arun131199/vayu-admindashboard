@@ -6,7 +6,6 @@ import { getOrderById, type OrderRow } from "../../service/orderApi";
 import { getServiceEnrollmentById, type ServiceEnrollmentRow } from "../../service/serviceEnrollmentApi";
 import { getCourseEnrollmentById, type CourseEnrollmentRow } from "../../service/courseEnrollmentApi";
 import { getRpcById, type RpcEnquiryRow } from "../../service/rpcApi";
-import { updateCourseEnrollmentStatus } from "../../service/courseEnrollmentApi";
 import { type OrderReplacementRow } from "../../service/replacementApi";
 import { getAppointmentById, type AppointmentRow } from "../../service/appointmentApi";
 

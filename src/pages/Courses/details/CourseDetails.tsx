@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, CalendarDays, Clock3, IndianRupee, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock3, IndianRupee, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import BreadCrump from "../../../component/BreadCrump/BreadCrump";
@@ -79,10 +79,10 @@ export default function CourseDetails() {
                     <p className="text-sm text-gray-500 dark:text-gray-300">{course.courseDescription}</p>
                     <span
                         className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${course.courseStatus === "ACTIVE"
-                                ? "bg-green-200 text-green-700"
-                                : course.courseStatus === "COMING_SOON"
-                                    ? "bg-yellow-200 text-yellow-700"
-                                    : "bg-red-200 text-red-700"
+                            ? "bg-green-200 text-green-700"
+                            : course.courseStatus === "COMING_SOON"
+                                ? "bg-yellow-200 text-yellow-700"
+                                : "bg-red-200 text-red-700"
                             }`}
                     >
                         {course.courseStatus}

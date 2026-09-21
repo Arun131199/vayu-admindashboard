@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarDays, ChartBarStacked, Clock, GraduationCap, Image, IndianRupee, Save, Text, TextAlignCenterIcon } from "lucide-react";
+import { ArrowLeft, ChartBarStacked, Clock, GraduationCap, Image, IndianRupee, Save, Text, TextAlignCenterIcon } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import AllInputFields from "../../../component/AllInputFields/AllInputFields";

@@ -1,4 +1,4 @@
-import type { GoogleReviewResponse } from "../interfaces/TestimonialResponse";
+import type { GoogleReviewResponse } from "../interfaces/testimonialResponse";
 import api from "./api";
 
 

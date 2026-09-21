@@ -69,7 +69,7 @@ export default function Table<T>({
         message: string;
         confirmButtonText?: string;
     } | null>(null);
-    const [reloadKey, setReloadKey] = useState(0);
+    const [reloadKey, _setReloadKey] = useState(0);
     const [draftFilters, setDraftFilters] = useState<AdvancedFilterRule[]>([]);
     const [filterPopoverOffset, setFilterPopoverOffset] = useState({ x: 0, y: 0 });
     const [viewData, setViewData] = useState<T | null>(null);

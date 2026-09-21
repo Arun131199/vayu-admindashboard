@@ -8,7 +8,7 @@ import { updateOrderStatus, type OrderRow, type OrderStatus } from "../../servic
 import { updateServiceEnrollmentStatus, type ServiceEnrollmentRow } from "../../service/serviceEnrollmentApi";
 import { updateRpcStatus, type RpcEnquiryRow } from "../../service/rpcApi";
 import type { EnrollmentStatus } from "../../service/serviceEnrollmentApi";
-import { getCourseEnrollmentById, updateCourseEnrollmentStatus, updateCourseProgress, type CourseEnrollmentRow } from "../../service/courseEnrollmentApi";
+import { updateCourseEnrollmentStatus, updateCourseProgress, type CourseEnrollmentRow } from "../../service/courseEnrollmentApi";
 import { updateAppointmentStatus, type AppointmentRow } from "../../service/appointmentApi";
 import { updateReplacementStatus, type OrderReplacementRow, type ReplacementStatus } from "../../service/replacementApi";
 import { toast } from "sonner";
