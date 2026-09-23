@@ -4,15 +4,10 @@ import type { loginProps } from "../../utils/LoginInterfce.ts";
 import AllInputFields from "../../component/AllInputFields/AllInputFields.tsx";
 import { AlertCircle, CheckCircle, MailOpen } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { useDispatch, useSelector } from "react-redux";
-import type { AppDispatch, RootState } from "../../redux/store/store.ts";
-import { sendOtp } from "../../redux/slice/securitySlice.ts";
 
 export default function Login() {
     const navigate = useNavigate();
     const { login, completeLogin } = useAuth();
-    const dispatch = useDispatch<AppDispatch>();
-    const twoFactorEnabled = useSelector((state: RootState) => state.security.twoFactorEnabled);
 
     const [getLoginData, setGetLoginData] = useState<loginProps>({
         username: "",
@@ -21,6 +16,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [otpPending, setOtpPending] = useState(false);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,28 +30,32 @@ export default function Login() {
 
         setLoading(true);
         try {
-            const userData = await login(getLoginData.username, getLoginData.password);
-            console.log(userData);
-            if (userData) {
-                setSuccess(true);
-                setGetLoginData({ username: "", password: "" });
+            const result = await login(getLoginData.username, getLoginData.password);
+            console.log(result);
 
-                if (twoFactorEnabled) {
-                    dispatch(sendOtp(userData));
-                    setTimeout(() => {
-                        navigate("/verify-otp");
-                    }, 500);
-                    return;
-                }
-                completeLogin(userData);
-                
-
-                setTimeout(() => {
-                    navigate("/admin-dashboard");
-                }, 500);
-            } else {
+            if (!result) {
                 setError("Invalid email or password");
+                return;
             }
+
+            if (result.requiresOtp) {
+                setSuccess(true);
+                setOtpPending(true);
+                sessionStorage.setItem("pendingLoginEmail", result.email);
+                setGetLoginData({ username: "", password: "" });
+                setTimeout(() => {
+                    navigate("/verify-otp");
+                }, 500);
+                return;
+            }
+
+            setSuccess(true);
+            setGetLoginData({ username: "", password: "" });
+            completeLogin({ username: result.username ?? "", email: result.email });
+
+            setTimeout(() => {
+                navigate("/admin-dashboard");
+            }, 500);
         } catch (err) {
             setError("Login failed. Please try again.");
         } finally {
@@ -71,7 +71,6 @@ export default function Login() {
                     <p className="text-gray-500 text-sm m-0">Sign in to your account</p>
                 </div>
 
-                {/* Error Message */}
                 {error && (
                     <div className="flex items-center gap-2 bg-red-50 border border-red-300 rounded-lg p-3 mb-4 text-red-600">
                         <AlertCircle size={20} />
@@ -79,12 +78,11 @@ export default function Login() {
                     </div>
                 )}
 
-                {/* Success Message */}
                 {success && (
                     <div className="flex items-center gap-2 bg-green-50 border border-green-300 rounded-lg p-3 mb-4 text-green-600">
                         <CheckCircle size={20} />
                         <span className="text-sm">
-                            {twoFactorEnabled ? "OTP sent! Redirecting to verification..." : "Login successful! Redirecting..."}
+                            {otpPending ? "New device detected — verification code sent! Redirecting..." : "Login successful! Redirecting..."}
                         </span>
                     </div>
                 )}

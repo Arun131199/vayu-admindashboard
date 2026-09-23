@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import api from "../service/api";
 import { toast } from "sonner";
+import { getDeviceId } from "../utils/deviceId";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -10,7 +11,8 @@ interface AuthContextType {
   role: string | null;
   employeeId: number | null;
   isAdmin: boolean;
-  login: (email: string, password: string) => Promise<{ username: string; email: string } | null>;
+  login: (email: string, password: string) => Promise<{ username?: string; email: string; requiresOtp?: boolean } | null>;
+  verifyLoginOtp: (email: string, otp: string) => Promise<{ username: string; email: string } | null>;
   completeLogin: (userData: { username: string; email: string }) => void;
   logout: () => void;
 }
@@ -81,9 +83,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await api.post("admin/auth/login", { email, password });
+      const response = await api.post("admin/auth/login", { email, password, deviceId: getDeviceId() });
       const result = response?.data;
       if (result.success) {
+        if (result.data.requiresOtp) {
+          // 2FA required — login not complete yet
+          return { requiresOtp: true, email: result.data.email };
+        }
         localStorage.setItem("token", result.data.token);
         localStorage.setItem("permissions", JSON.stringify(result.data.permissions));
         localStorage.setItem("role", result.data.role ?? "");
@@ -99,6 +105,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     } catch (error) {
       toast.error("Invalid email or password");
+      console.error(error);
+      return null;
+    }
+  };
+
+  const verifyLoginOtp = async (email: string, otp: string) => {
+    try {
+      const response = await api.post("admin/auth/login/verify-device", { email, otp, deviceId: getDeviceId() });
+      const result = response?.data;
+      if (result.success) {
+        localStorage.setItem("token", result.data.token);
+        localStorage.setItem("permissions", JSON.stringify(result.data.permissions));
+        localStorage.setItem("role", result.data.role ?? "");
+        localStorage.setItem("employeeId", String(result.data.id ?? ""));
+
+        setPermissions(result.data.permissions);
+        setRole(result.data.role ?? null);
+        setEmployeeId(result.data.id ?? null);
+        toast.success("Login successfully");
+        return { username: result.data.name, email: result.data.email };
+      }
+      toast.error(result.message || "Invalid or expired code");
+      return null;
+    } catch (error) {
+      toast.error("Invalid or expired code");
       console.error(error);
       return null;
     }
@@ -121,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = (role ?? "").toUpperCase() === "SUPER_ADMIN";
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, permissions, role, employeeId, isAdmin, login, completeLogin, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, permissions, role, employeeId, isAdmin, login, verifyLoginOtp, completeLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );
