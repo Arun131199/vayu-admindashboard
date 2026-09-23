@@ -62,3 +62,27 @@ export const getOrderTracking = async (orderId: number) => {
   const res = await api.get(`v1/products/orders/${orderId}/tracking`);
   return res.data?.data ?? [];
 };
+
+export const exportOrders = async (exportType: "EXCEL" | "PDF" | "CSV") => {
+  const res = await api.get(`v1/products/orders/export/orders?exportType=${exportType}`, {
+    responseType: "blob",
+  });
+  const extensionMap: Record<string, string> = { EXCEL: "xlsx", PDF: "pdf", CSV: "csv" };
+  const url = window.URL.createObjectURL(new Blob([res.data]));
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", `orders_report.${extensionMap[exportType]}`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+export const importOrders = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await api.post("v1/products/orders/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};

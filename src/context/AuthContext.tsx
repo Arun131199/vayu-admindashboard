@@ -7,6 +7,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: { username: string; email: string } | null;
   permissions: string[];
+  role: string | null;
+  employeeId: number | null;
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ username: string; email: string } | null>;
   completeLogin: (userData: { username: string; email: string }) => void;
   logout: () => void;
@@ -41,12 +44,20 @@ const getStoredPermissions = (): string[] => {
   }
 };
 
+const getStoredRole = (): string | null => localStorage.getItem("role");
+const getStoredEmployeeId = (): number | null => {
+  const raw = localStorage.getItem("employeeId");
+  return raw ? Number(raw) : null;
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<{ username: string; email: string } | null>(() => getStoredUser());
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("isAuthenticated") === "true" && Boolean(getStoredUser());
   });
   const [permissions, setPermissions] = useState<string[]>(() => getStoredPermissions());
+  const [role, setRole] = useState<string | null>(() => getStoredRole());
+  const [employeeId, setEmployeeId] = useState<number | null>(() => getStoredEmployeeId());
 
   useEffect(() => {
     const storedAuth = localStorage.getItem("isAuthenticated");
@@ -56,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthenticated(true);
       setUser(storedUser);
       setPermissions(getStoredPermissions());
+      setRole(getStoredRole());
+      setEmployeeId(getStoredEmployeeId());
     }
   }, []);
 
@@ -73,8 +86,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (result.success) {
         localStorage.setItem("token", result.data.token);
         localStorage.setItem("permissions", JSON.stringify(result.data.permissions));
-        
+        localStorage.setItem("role", result.data.role ?? "");
+        localStorage.setItem("employeeId", String(result.data.id ?? ""));
+
         setPermissions(result.data.permissions);
+        setRole(result.data.role ?? null);
+        setEmployeeId(result.data.id ?? null);
         toast.success("Login successfully");
         return { username: result.data.name, email: result.data.email };
       }
@@ -91,14 +108,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setIsAuthenticated(false);
     setPermissions([]);
+    setRole(null);
+    setEmployeeId(null);
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("permissions");
+    localStorage.removeItem("role");
+    localStorage.removeItem("employeeId");
   };
 
+  const isAdmin = (role ?? "").toUpperCase() === "SUPER_ADMIN";
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, permissions, login, completeLogin, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, permissions, role, employeeId, isAdmin, login, completeLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

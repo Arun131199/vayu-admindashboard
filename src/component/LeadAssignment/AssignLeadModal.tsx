@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Modal from "../Table/Modal";
 import { getAllCompanyUsers, type CompanyUserRow } from "../../service/companyUserApi";
 import { assignLead, type LeadType } from "../../service/leadApi";
+import { toast } from "sonner";
 
 type AssignLeadModalProps = {
     open: boolean;
@@ -39,6 +40,7 @@ export default function AssignLeadModal({ open, leadType, entityId, currentAssig
         setError("");
         try {
             await assignLead(leadType, entityId, Number(selectedId));
+            toast.success("The lead is asigned successfully to the selected member")
             onAssigned();
             onClose();
         } catch (err: any) {

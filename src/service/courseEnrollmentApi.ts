@@ -52,3 +52,27 @@ export const updateCourseProgress = async (userId: number, courseId: number, pro
   const res = await api.patch(`v1/courses/progress/${userId}/${courseId}`, { progressPercent });
   return res.data;
 };
+
+export const importCourseEnrollments = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await api.post("v1/students/import", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;  
+};
+
+export const archiveCourseEnrollment = async (id: number) => {
+  const res = await api.delete(`v1/students/${id}`);
+  return res.data;
+};
+
+export const getArchivedCourseEnrollments = async (): Promise<CourseEnrollmentRow[]> => {
+  const res = await api.get("v1/students/archived");
+  return res.data?.data ?? [];
+};
+
+export const restoreCourseEnrollment = async (id: number) => {
+  const res = await api.patch(`v1/students/${id}/restore`);
+  return res.data;
+};

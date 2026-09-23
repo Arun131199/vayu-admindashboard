@@ -1,4 +1,4 @@
-import { Calculator, CalendarRange, MessageCircleIcon, ShoppingBag, IdCard, type LucideIcon, Calendar, RefreshCw, UserCheck } from "lucide-react";
+import { Calculator, CalendarRange, MessageCircleIcon, ShoppingBag, IdCard, type LucideIcon, Calendar, RefreshCw } from "lucide-react";
 import StatusCard from "../../../component/Cards/StatusCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -8,10 +8,20 @@ import { defaultTableActionFeatures, type TableActionFeatures } from "../../../u
 import { getAllOrders, type OrderRow } from "../../../service/orderApi";
 import { getAllServiceEnrollments, type ServiceEnrollmentRow } from "../../../service/serviceEnrollmentApi";
 import { getAllCourseEnrollments, type CourseEnrollmentRow } from "../../../service/courseEnrollmentApi";
-import { getAllRpcEnquiries, type RpcEnquiryRow } from "../../../service/rpcApi";
+import { exportRpcEnquiries, getAllRpcEnquiries, importRpcEnquiries, type RpcEnquiryRow } from "../../../service/rpcApi";
 import { getAllAppointments, type AppointmentRow } from "./../../../service/appointmentApi";
 import { getAllReplacements, type OrderReplacementRow } from "../../../service/replacementApi";
 import { getAllLeadAssignments, type LeadAssignment, type LeadType } from "../../../service/leadApi";
+import { useAuth } from "../../../context/AuthContext";
+import { getMyAssignedLeads } from "../../../service/rpcApi";
+import { getMyLeadIds } from "../../../service/leadApi";
+
+import { exportOrders, importOrders } from "../../../service/orderApi";
+import { exportServiceEnrollments, importServiceEnrollments, } from "../../../service/serviceEnrollmentApi";
+import { exportCourseEnrollments, importCourseEnrollments } from "../../../service/courseEnrollmentApi";
+import { archiveRecords, getArchivedIds, restoreRecord, type ArchiveLeadType } from "../../../service/archiveApi";
+import { getArchivedCourseEnrollments, restoreCourseEnrollment } from "../../../service/courseEnrollmentApi";
+import { toast } from "sonner";
 
 type TabKey = "products" | "services" | "courses" | "rpc" | "appointments" | "replacements";
 
@@ -46,7 +56,6 @@ const enrollmentStatusBadge: Record<string, string> = {
     DROPPED: "bg-red-100 text-red-700",
 };
 
-// Generic "Assigned To" column — reused across product/service/course/appointment/replacement tables
 function assignedToColumn<T extends { id: number }>(assignments: Record<number, LeadAssignment>): ColumnDef<T> {
     return {
         key: "assignedTo",
@@ -71,7 +80,7 @@ function assignedToColumn<T extends { id: number }>(assignments: Record<number, 
 
 export default function BookingMain() {
     const navigate = useNavigate();
-
+    const { isAdmin } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
     const tabFromUrl = (searchParams.get("view") as TabKey) ?? "products";
@@ -85,6 +94,20 @@ export default function BookingMain() {
     const [error, setError] = useState<string | null>(null);
     const [replacements, setReplacements] = useState<OrderReplacementRow[]>([]);
     const [assignments, setAssignments] = useState<Record<number, LeadAssignment>>({});
+    const [viewingArchived, setViewingArchived] = useState(false);
+    const [archivedRows, setArchivedRows] = useState<any[]>([]);
+    const [archivedLoading, setArchivedLoading] = useState(false);
+
+    const [archivedIds, setArchivedIds] = useState<Set<number>>(new Set());
+
+    const tabToArchiveType: Partial<Record<TabKey, ArchiveLeadType>> = {
+        products: "PRODUCT",
+        services: "SERVICE",
+        courses: "COURSE",
+        rpc: "RPC",
+        appointments: "APPOINTMENT",
+        replacements: "REPLACEMENT",
+    };
 
     const loadAssignments = useCallback(async (tab: TabKey) => {
         const leadType = tabToLeadType[tab];
@@ -106,75 +129,115 @@ export default function BookingMain() {
         setLoading(true);
         setError(null);
         try {
-            setOrders(await getAllOrders());
+            const all = await getAllOrders();
+            if (isAdmin) {
+                setOrders(all);
+            } else {
+                const myIds = await getMyLeadIds("PRODUCT");
+                setOrders(all.filter((o) => myIds.includes(o.id)));
+            }
         } catch (err) {
             console.error(err);
             setError("Failed to load product bookings");
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [isAdmin]);
 
     const loadServiceEnrollments = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            setServiceEnrollments(await getAllServiceEnrollments());
+            const all = await getAllServiceEnrollments();
+            if (isAdmin) {
+                setServiceEnrollments(all);
+            } else {
+                const myIds = await getMyLeadIds("SERVICE");
+                setServiceEnrollments(all.filter((s) => myIds.includes(s.id)));
+            }
         } catch (err) {
             console.error(err);
             setError("Failed to load service bookings");
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [isAdmin]);
 
     const loadCourseEnrollments = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            setCourseEnrollments(await getAllCourseEnrollments());
+            const all = await getAllCourseEnrollments();
+            if (isAdmin) {
+                setCourseEnrollments(all);
+            } else {
+                const myIds = await getMyLeadIds("COURSE");
+                setCourseEnrollments(all.filter((c) => myIds.includes(c.id)));
+            }
         } catch (err) {
             console.error(err);
             setError("Failed to load course enrollments");
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [isAdmin]);
 
     const loadRpcEnquiries = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            setRpcEnquiries(await getAllRpcEnquiries());
+            const data = isAdmin ? await getAllRpcEnquiries() : await getMyAssignedLeads();
+            setRpcEnquiries(data);
         } catch (err) {
             console.error(err);
             setError("Failed to load RPC enquiries");
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [isAdmin]);
 
     const loadAppointments = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await getAllAppointments();
-            setAppointments(data);
+            const all = await getAllAppointments();
+            if (isAdmin) {
+                setAppointments(all);
+            } else {
+                const myIds = await getMyLeadIds("APPOINTMENT");
+                setAppointments(all.filter((a) => myIds.includes(a.id)));
+            }
         } catch (err) {
             console.error("Failed to load appointments", err);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [isAdmin]);
 
     const loadReplacements = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await getAllReplacements();
-            setReplacements(data);
+            const all = await getAllReplacements();
+            if (isAdmin) {
+                setReplacements(all);
+            } else {
+                const myIds = await getMyLeadIds("REPLACEMENT");
+                setReplacements(all.filter((r) => myIds.includes(r.id)));
+            }
         } catch (err) {
             console.error("Failed to load replacements", err);
         } finally {
             setLoading(false);
+        }
+    }, [isAdmin]);
+
+    const loadArchivedIds = useCallback(async (tab: TabKey) => {
+        const archiveType = tabToArchiveType[tab];
+        if (!archiveType) { setArchivedIds(new Set()); return; }
+        try {
+            const ids = await getArchivedIds(archiveType);
+            setArchivedIds(new Set(ids));
+        } catch (err) {
+            console.error("Failed to load archived ids", err);
         }
     }, []);
 
@@ -187,7 +250,8 @@ export default function BookingMain() {
         else loadRpcEnquiries();
 
         loadAssignments(activeTab);
-    }, [activeTab]);
+        loadArchivedIds(activeTab);
+    }, [activeTab, isAdmin]);
 
     useEffect(() => {
         const handleBookingUpdated = () => {
@@ -202,10 +266,6 @@ export default function BookingMain() {
         return () => window.removeEventListener("booking-updated", handleBookingUpdated);
     }, [activeTab, loadOrders, loadServiceEnrollments, loadCourseEnrollments, loadAppointments, loadRpcEnquiries, loadAssignments]);
 
-    const handleTabChange = (tab: TabKey) => {
-        setActiveTab(tab);
-        setSearchParams({ view: tab });
-    };
 
     const statusData = useMemo(() => {
         if (activeTab === "products") {
@@ -583,6 +643,73 @@ export default function BookingMain() {
         }
     }
 
+    const handleShowArchive = async () => {
+        setArchivedLoading(true);
+        setViewingArchived(true);
+        try {
+            if (activeTab === "courses") {
+                const data = await getArchivedCourseEnrollments();
+                setArchivedRows(data);
+                return;
+            }
+
+            const archiveType = tabToArchiveType[activeTab];
+            if (!archiveType) { setArchivedRows([]); return; }
+
+            const ids = await getArchivedIds(archiveType);
+            setArchivedIds(new Set(ids));
+
+            let all: any[] = [];
+            if (activeTab === "products") all = await getAllOrders();
+            else if (activeTab === "services") all = await getAllServiceEnrollments();
+            else if (activeTab === "rpc") all = await getAllRpcEnquiries();
+            else if (activeTab === "appointments") all = await getAllAppointments();
+            else if (activeTab === "replacements") all = await getAllReplacements();
+
+            setArchivedRows(all.filter((row) => ids.includes(row.id)));
+        } catch (err) {
+            toast.error("Failed to load archived records");
+        } finally {
+            setArchivedLoading(false);
+        }
+    };
+
+    const handleBackToActive = () => {
+        setViewingArchived(false);
+        setArchivedRows([]);
+    };
+
+    const handleRestore = async (row: any) => {
+        try {
+            if (activeTab === "courses") {
+                await restoreCourseEnrollment(row.id);
+                await loadCourseEnrollments();
+            } else {
+                const archiveType = tabToArchiveType[activeTab];
+                if (!archiveType) return;
+                await restoreRecord(archiveType, row.id);
+                await loadArchivedIds(activeTab);
+                // refresh the active tab's data too
+                if (activeTab === "products") await loadOrders();
+                else if (activeTab === "services") await loadServiceEnrollments();
+                else if (activeTab === "rpc") await loadRpcEnquiries();
+                else if (activeTab === "appointments") await loadAppointments();
+                else if (activeTab === "replacements") await loadReplacements();
+            }
+            // refresh the archived view itself
+            await handleShowArchive();
+        } catch (err) {
+            console.error("Failed to restore record", err);
+        }
+    };
+
+    const handleTabChange = (tab: TabKey) => {
+        setActiveTab(tab);
+        setSearchParams({ view: tab });
+        setViewingArchived(false);
+        setArchivedRows([]);
+    };
+
     return (
         <main className="space-y-4">
             <section className="space-y-4">
@@ -613,9 +740,10 @@ export default function BookingMain() {
                 {error && <p className="text-red-500">{error}</p>}
 
                 <section>
-                    {activeTab === "products" && (
+                    {!viewingArchived && <>
+                        {activeTab === "products" && (
                         <Table
-                            data={orders}
+                            data={orders.filter((o) => !archivedIds.has(o.id))}
                             columns={orderColumns}
                             rowKey={(row) => String(row.id)}
                             mode="client"
@@ -625,12 +753,18 @@ export default function BookingMain() {
                             showRowActions={true}
                             onRefresh={() => handleRefersh()}
                             onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "product", data: row } })}
-
+                            onExportFile={async (format) => { await exportOrders(format.toUpperCase() as "EXCEL" | "PDF" | "CSV"); }}
+                            onImportFile={async (file) => { await importOrders(file); await loadOrders(); }}
+                            onArchiveSelected={async (rows) => {
+                                await archiveRecords("PRODUCT", rows.map((r) => r.id));
+                                await loadArchivedIds("products");
+                            }}
+                            onShowArchive={handleShowArchive}
                         />
-                    )}
-                    {activeTab === "services" && (
+                        )}
+                        {activeTab === "services" && (
                         <Table
-                            data={serviceEnrollments}
+                            data={serviceEnrollments.filter((s) => !archivedIds.has(s.id))}
                             columns={serviceColumns}
                             rowKey={(row) => String(row.id)}
                             mode="client"
@@ -640,11 +774,18 @@ export default function BookingMain() {
                             showRowActions={true}
                             onRefresh={() => handleRefersh()}
                             onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "service", data: row } })}
+                            onExportFile={async (format) => { await exportServiceEnrollments(format.toUpperCase() as "EXCEL" | "PDF" | "CSV"); }}
+                            onImportFile={async (file) => { await importServiceEnrollments(file); await loadServiceEnrollments(); }}
+                            onArchiveSelected={async (rows) => {
+                                await archiveRecords("SERVICE", rows.map((r) => r.id));
+                                await loadArchivedIds("services");
+                            }}
+                            onShowArchive={handleShowArchive}
                         />
-                    )}
-                    {activeTab === "courses" && (
+                        )}
+                        {activeTab === "courses" && (
                         <Table
-                            data={courseEnrollments}
+                            data={courseEnrollments.filter((c) => !archivedIds.has(c.id))}
                             columns={courseColumns}
                             rowKey={(row) => String(row.id)}
                             mode="client"
@@ -654,11 +795,18 @@ export default function BookingMain() {
                             showRowActions={true}
                             onRefresh={() => handleRefersh()}
                             onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "course", data: row } })}
+                            onExportFile={async (format) => { await exportCourseEnrollments(format.toUpperCase() as "EXCEL" | "PDF" | "CSV"); }}
+                            onImportFile={async (file) => { await importCourseEnrollments(file); await loadCourseEnrollments(); }}
+                            onArchiveSelected={async (rows) => {
+                                await archiveRecords("COURSE", rows.map((row) => row.id));
+                                await loadArchivedIds("courses");
+                            }}
+                            onShowArchive={handleShowArchive}
                         />
-                    )}
-                    {activeTab === "rpc" && (
+                        )}
+                        {activeTab === "rpc" && (
                         <Table
-                            data={rpcEnquiries}
+                            data={rpcEnquiries.filter((r) => !archivedIds.has(r.id))}
                             columns={rpcColumns}
                             rowKey={(row) => String(row.id)}
                             mode="client"
@@ -668,37 +816,100 @@ export default function BookingMain() {
                             showRowActions={true}
                             onRefresh={() => handleRefersh()}
                             onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "rpc", data: row } })}
+                            onExportFile={async (format) => {
+                                await exportRpcEnquiries(format.toUpperCase() as "EXCEL" | "PDF" | "CSV");
+                            }}
+                            onImportFile={async (file) => {
+                                await importRpcEnquiries(file);
+                                await loadRpcEnquiries();
+                            }}
+                            onArchiveSelected={async (rows) => {
+                                await archiveRecords("RPC", rows.map((r) => r.id));
+                                await loadArchivedIds("rpc");
+                            }}
+                            onShowArchive={handleShowArchive}
                         />
-                    )}
-                    {activeTab === "appointments" && (
+                        )}
+                        {activeTab === "appointments" && (
                         <Table
-                            data={appointments}
+                            data={appointments.filter((a) => !archivedIds.has(a.id))}
                             columns={appointmentColumns}
                             rowKey={(row) => String(row.id)}
                             mode="client"
                             dateFilterAccessor="createdAt"
                             loading={loading}
-                            tableActionFeatures={tableActionFeatures}
+                            tableActionFeatures={{ ...tableActionFeatures, showImport: false, showExport: false }}
                             showRowActions={true}
                             onRefresh={() => handleRefersh()}
                             onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "appointment", data: row } })}
+                            onArchiveSelected={async (rows) => {
+                                await archiveRecords("APPOINTMENT", rows.map((r) => r.id));
+                                await loadArchivedIds("appointments");
+                            }}
+                            onShowArchive={handleShowArchive}
                         />
-                    )}
+                        )}
 
-                    {activeTab === "replacements" && (
+                        {activeTab === "replacements" && (
                         <Table
-                            data={replacements}
+                            data={replacements.filter((r) => !archivedIds.has(r.id))}
                             columns={replacementColumns}
                             rowKey={(row) => String(row.id)}
                             mode="client"
                             dateFilterAccessor="createdAt"
                             loading={loading}
-                            tableActionFeatures={tableActionFeatures}
+                            tableActionFeatures={{ ...tableActionFeatures, showImport: false, showExport: false }}
                             showRowActions={true}
                             onRefresh={() => handleRefersh()}
                             onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "replacement", data: row } })}
+                            onArchiveSelected={async (rows) => {
+                                await archiveRecords("REPLACEMENT", rows.map((r) => r.id));
+                                await loadArchivedIds("replacements");
+                            }}
+                            onShowArchive={handleShowArchive}
                         />
-                    )}
+                        )}
+                    </>}
+                    {viewingArchived ? (
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                    Archived {slideData.find((t) => t.value === activeTab)?.label}
+                                </h2>
+                                <button
+                                    onClick={handleBackToActive}
+                                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
+                                >
+                                    ← Back to Active
+                                </button>
+                            </div>
+                            <Table<any>
+                                data={archivedRows}
+                                columns={
+                                    activeTab === "products" ? orderColumns :
+                                        activeTab === "services" ? serviceColumns :
+                                            activeTab === "courses" ? courseColumns :
+                                                activeTab === "rpc" ? rpcColumns :
+                                                    activeTab === "appointments" ? appointmentColumns :
+                                                        replacementColumns
+                                }
+                                rowKey={(row: any) => String(row.id)}
+                                mode="client"
+                                loading={archivedLoading}
+                                tableActionFeatures={{ ...tableActionFeatures, showExport: false, showImport: false, showArchive: false }}
+                                showRowActions={true}
+                                renderRowActions={(row: any) => (
+                                    <button
+                                        onClick={() => handleRestore(row)}
+                                        className="px-3 py-1 bg-green-500 text-white rounded-md text-xs font-medium hover:bg-green-600 transition-colors"
+                                    >
+                                        Restore
+                                    </button>
+                                )}
+                                onRefresh={handleShowArchive}
+                            />
+                        </div>
+                    ) : null}
                 </section>
             </section>
         </main>

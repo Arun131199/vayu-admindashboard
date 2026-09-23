@@ -131,9 +131,18 @@ export default function ViewBookingEnquiry() {
     }
 
     if (loading || !data) {
-        return <main className="p-6 text-gray-500">Loading...</main>;
+        return (
+            <main className="p-6">
+                {Array.from({ length: 16 }).map((_, i) => (
+                    <div
+                        key={i}
+                        className="h-5 mb-4 bg-gray-200 rounded-sm dark:bg-gray-800 animate-pulse"
+                    />
+                ))}
+            </main>
+        );
     }
-
+    
     const TypeIcon = typeIcon[type];
     const status = (data as any).status ?? (data as any).orderStatus;
     const rpcData = type === "rpc" ? (data as RpcEnquiryRow) : null;
