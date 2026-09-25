@@ -14,7 +14,7 @@ function formatTimestamp(date: Date) {
     return `${day}-${month}-${year} / ${hours}:${minutes}`;
 }
 
-export default function Navbar({ data }: NavbarProps) {
+export default function Navbar({ data, menu }: NavbarProps) {
     const profile = data ?? { name: "Guest" };
     const navigate = useNavigate();
     const { logout } = useAuth();
@@ -26,19 +26,25 @@ export default function Navbar({ data }: NavbarProps) {
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useBookingNotifications();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const notificationRef = useRef<HTMLDivElement>(null);
+    const [search, setSearch] = useState("");
+    const searchRef = useRef<HTMLDivElement>(null);
+
+    const searchablePages = (menu ?? []).flatMap((item) =>
+        item.children?.length
+            ? item.children.filter((child) => child.path)
+            : item.path
+                ? [item]
+                : []
+    );
+    const searchResults = search.trim()
+        ? searchablePages.filter((item) =>
+            item.name.toLowerCase().includes(search.trim().toLowerCase())
+        )
+        : [];
 
     const currentPage = location.pathname.split("/").filter(Boolean).pop();
     const pageTitle = currentPage?.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
-    // Update time every minute
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentTime(new Date());
-        }, 60000);
-        return () => clearInterval(timer);
-    }, []);
-
-    // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -46,6 +52,9 @@ export default function Navbar({ data }: NavbarProps) {
             }
             if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
                 setIsNotificationOpen(false);
+            }
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setSearch("");
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -65,6 +74,18 @@ export default function Navbar({ data }: NavbarProps) {
     const handleNotificationClick = (key: string) => {
         markAsRead(key);
     };
+
+    const handleSearchResultClick = (path: string) => {
+        navigate(`/admin-dashboard/${path}`.replace(/\/+/g, "/"));
+        setSearch("");
+    };
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 60000);
+        return () => clearInterval(timer);
+    }, []);
 
     return (
         <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
@@ -90,15 +111,37 @@ export default function Navbar({ data }: NavbarProps) {
             <div className="flex items-center gap-3">
 
                 {/* Search Bar */}
-                <div className="hidden lg:flex items-center relative">
+                <div className="hidden lg:flex items-center relative" ref={searchRef}>
                     <input
                         type="text"
                         placeholder="Search..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
                         className="w-64 px-4 py-1.5 pl-9 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     />
                     <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
+                    {search.trim() && (
+                        <div className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800 z-50">
+                            {searchResults.length > 0 ? (
+                                searchResults.map((result) => (
+                                    <button
+                                        key={result.path}
+                                        type="button"
+                                        onClick={() => handleSearchResultClick(result.path!)}
+                                        className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                                    >
+                                        {result.name}
+                                    </button>
+                                ))
+                            ) : (
+                                <p className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                    No pages found
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Notifications Dropdown */}

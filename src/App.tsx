@@ -28,7 +28,7 @@ function App() {
       <div className="flex flex-col flex-1 overflow-hidden">
 
         {/* Navbar */}
-        <Navbar data={navbarData} />
+        <Navbar data={navbarData} menu={filteredMenu} />
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto p-4 bg-gray-100 dark:bg-gray-950">

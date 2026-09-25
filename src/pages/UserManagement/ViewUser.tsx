@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import BreadCrump from "../../component/BreadCrump/BreadCrump";
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronUp, PencilIcon, Shield, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, PencilIcon, Shield, Trash2 } from "lucide-react";
 import Button from "../../component/Buttons/Button";
 import { useState, useEffect } from "react";
 import ConfirmationPopup from "../../component/Popup/ConfirmationPopup";

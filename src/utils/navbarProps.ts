@@ -1,3 +1,5 @@
+import type { NavbarItem } from "../routes/NavbarItem";
+
 export interface NavbarProps {
     data?: {
         name: string;
@@ -5,4 +7,5 @@ export interface NavbarProps {
         email?: string;
         role?: string;
     };
+    menu?: NavbarItem[];
 }
