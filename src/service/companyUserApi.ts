@@ -18,6 +18,14 @@ export interface CompanyUserRow {
     active: boolean;
     createdAt: string;
     permissions: ModulePermission[];
+    isOnline: boolean;
+}
+
+export interface LoginSessionRow {
+  date: string;
+  loginAt: string;
+  logoutAt: string | null;
+  durationText: string;
 }
 
 export const getAllCompanyUsers = async (): Promise<CompanyUserRow[]> => {
@@ -43,4 +51,9 @@ export const deleteCompanyUser = async (id: number) => {
 export const getCompanyUserById = async (id: number): Promise<CompanyUserRow | null> => {
     const res = await api.get(`admin/users/${id}`);
     return res.data?.data ?? null;
+};
+
+export const getLoginHistory = async (userId: number): Promise<LoginSessionRow[]> => {
+  const res = await api.get(`admin/users/${userId}/login-history`);
+  return res.data?.data ?? [];
 };

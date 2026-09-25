@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import BreadCrump from "../../component/BreadCrump/BreadCrump";
-import { ArrowLeft, PencilIcon, Shield, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronUp, PencilIcon, Shield, Trash2 } from "lucide-react";
 import Button from "../../component/Buttons/Button";
 import { useState, useEffect } from "react";
 import ConfirmationPopup from "../../component/Popup/ConfirmationPopup";
@@ -9,6 +9,7 @@ import type { userData } from "./UserManagement";
 import { toast } from "sonner";
 import axios from "axios";
 import SkeletonBlock from "../../component/Skeleton/SkeletonBlock";
+import LoginHistoryTable from "../../component/UserManagement/LoginHistoryTable";
 
 
 export default function ViewUser() {
@@ -20,6 +21,7 @@ export default function ViewUser() {
     const [loading, setLoading] = useState(!location?.state);
     const [confirmation, setConfirmation] = useState(false);
     const [deleting, setDeleting] = useState(false);
+    const [isOpen, setOpen] = useState<boolean>(false)
 
     const breadcrumpOptions = [
         {
@@ -38,6 +40,7 @@ export default function ViewUser() {
         email: userRow.email,
         role: userRow.roleName,
         status: userRow.active ? "Active" : "Inactive",
+        isOnline: userRow.isOnline,   // NEW
         permissions: userRow.permissions.map((p) => ({
             id: p.module,
             module: p.module,
@@ -92,7 +95,6 @@ export default function ViewUser() {
         };
         loadUser();
     }, [id]);
-
 
     if (loading) {
         return (
@@ -223,7 +225,6 @@ export default function ViewUser() {
                             </p>
                         </div>
                     </div>
-
                     {/* Status */}
                     <div className="flex items-center gap-4 pt-4 border-t border-gray-200 dark:border-gray-800">
                         <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
@@ -237,112 +238,132 @@ export default function ViewUser() {
                         >
                             {userData?.status}
                         </span>
+
+                        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                            Login Status
+                        </p>
+                        <span className="flex items-center gap-2">
+                            <span className={`h-2.5 w-2.5 rounded-full ${userData?.isOnline ? "bg-green-500" : "bg-gray-400"}`} />
+                            <span className={`text-sm font-semibold ${userData?.isOnline ? "text-green-600" : "text-gray-500"}`}>
+                                {userData?.isOnline ? "Online" : "Offline"}
+                            </span>
+                        </span>
                     </div>
                 </div>
 
                 {/* Permissions Section */}
                 <div className="border-t border-gray-200 dark:border-gray-800 pt-6 space-y-4">
-                    <p className="font-semibold text-md dark:text-white">
-                        Module Permissions
-                    </p>
-
-                    <div className="space-y-3">
-                        {userData?.permissions && userData.permissions.length > 0 ? (
-                            userData.permissions.map((permission) => (
-                                <div
-                                    key={permission.id}
-                                    className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-gray-50 dark:bg-gray-800"
-                                >
-                                    <p className="font-medium text-md dark:text-white mb-3">
-                                        {permission.module}
-                                    </p>
-
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className={`w-2 h-2 rounded-full ${permission.canImport === "true"
-                                                    ? "bg-green-500"
-                                                    : "bg-red-500"
-                                                    }`}
-                                            ></div>
-                                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                Import:{" "}
-                                                <span className="font-semibold dark:text-white">
-                                                    {permission.canImport === "true" ? "Yes" : "No"}
-                                                </span>
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className={`w-2 h-2 rounded-full ${permission.canExport === "Yes"
-                                                    ? "bg-green-500"
-                                                    : "bg-red-500"
-                                                    }`}
-                                            ></div>
-                                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                Export:{" "}
-                                                <span className="font-semibold dark:text-white">
-                                                    {permission.canExport}
-                                                </span>
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className={`w-2 h-2 rounded-full ${permission.canCreate === "Yes"
-                                                    ? "bg-green-500"
-                                                    : "bg-red-500"
-                                                    }`}
-                                            ></div>
-                                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                Create:{" "}
-                                                <span className="font-semibold dark:text-white">
-                                                    {permission.canCreate}
-                                                </span>
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className={`w-2 h-2 rounded-full ${permission.canRead === "Yes"
-                                                    ? "bg-green-500"
-                                                    : "bg-red-500"
-                                                    }`}
-                                            ></div>
-                                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                Read:{" "}
-                                                <span className="font-semibold dark:text-white">
-                                                    {permission.canRead}
-                                                </span>
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className={`w-2 h-2 rounded-full ${permission.canDelete === "Yes"
-                                                    ? "bg-green-500"
-                                                    : "bg-red-500"
-                                                    }`}
-                                            ></div>
-                                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                Delete:{" "}
-                                                <span className="font-semibold dark:text-white">
-                                                    {permission.canDelete}
-                                                </span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                No permissions assigned
-                            </p>
-                        )}
+                    <div className="flex items-center justify-between cursor-pointer" onClick={() => setOpen(!isOpen)}>
+                        <p className="font-semibold text-md dark:text-white">
+                            Module Permissions
+                        </p>
+                        <button onClick={() => setOpen(!isOpen)}>
+                            <ChevronDown className={`${isOpen ? "rotate-180 transition-transform duration-100" : ""} cursor-pointer`} />
+                        </button>
                     </div>
+
+                    {
+                        isOpen ? (
+                            <div className="space-y-3">
+                                {userData?.permissions && userData.permissions.length > 0 ? (
+                                    userData.permissions.map((permission) => (
+                                        <div
+                                            key={permission.id}
+                                            className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 bg-gray-50 dark:bg-gray-800"
+                                        >
+                                            <p className="font-medium text-md dark:text-white mb-3">
+                                                {permission.module}
+                                            </p>
+
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className={`w-2 h-2 rounded-full ${permission.canImport === "true"
+                                                            ? "bg-green-500"
+                                                            : "bg-red-500"
+                                                            }`}
+                                                    ></div>
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                        Import:{" "}
+                                                        <span className="font-semibold dark:text-white">
+                                                            {permission.canImport === "true" ? "Yes" : "No"}
+                                                        </span>
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className={`w-2 h-2 rounded-full ${permission.canExport === "Yes"
+                                                            ? "bg-green-500"
+                                                            : "bg-red-500"
+                                                            }`}
+                                                    ></div>
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                        Export:{" "}
+                                                        <span className="font-semibold dark:text-white">
+                                                            {permission.canExport}
+                                                        </span>
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className={`w-2 h-2 rounded-full ${permission.canCreate === "Yes"
+                                                            ? "bg-green-500"
+                                                            : "bg-red-500"
+                                                            }`}
+                                                    ></div>
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                        Create:{" "}
+                                                        <span className="font-semibold dark:text-white">
+                                                            {permission.canCreate}
+                                                        </span>
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className={`w-2 h-2 rounded-full ${permission.canRead === "Yes"
+                                                            ? "bg-green-500"
+                                                            : "bg-red-500"
+                                                            }`}
+                                                    ></div>
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                        Read:{" "}
+                                                        <span className="font-semibold dark:text-white">
+                                                            {permission.canRead}
+                                                        </span>
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className={`w-2 h-2 rounded-full ${permission.canDelete === "Yes"
+                                                            ? "bg-green-500"
+                                                            : "bg-red-500"
+                                                            }`}
+                                                    ></div>
+                                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                        Delete:{" "}
+                                                        <span className="font-semibold dark:text-white">
+                                                            {permission.canDelete}
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        No permissions assigned
+                                    </p>
+                                )}
+                            </div>
+                        ) : null
+                    }
                 </div>
             </section>
+            {id && <LoginHistoryTable userId={Number(id)} />}
 
             {/* Delete Confirmation Popup */}
             {confirmation && (
@@ -352,8 +373,6 @@ export default function ViewUser() {
                     message="Are you sure you want to delete this user?"
                     onConfirm={handleDelete}
                     onClose={() => setConfirmation(false)}
-
-
                 />
             )}
         </main>

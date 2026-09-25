@@ -27,6 +27,7 @@ export interface userData {
     email: string;
     role: string;
     status: string,
+    isOnline: boolean;
     permissions: modulePermission[];
 }
 
@@ -56,6 +57,7 @@ export default function UserManagement() {
         email: u.email,
         role: u.roleName,
         status: u.active ? "Active" : "Inactive",
+        isOnline: u.isOnline,   
         permissions: u.permissions.map((p) => ({
             id: p.module,
             module: p.module,
@@ -117,6 +119,18 @@ export default function UserManagement() {
                     <span className="text-green-500"><Shield size={16} /></span>
                     <span>{row.role}</span>
                 </p>
+            )
+        },
+        {
+            key: "isOnline",
+            header: "Active",
+            accessor: (row) => (row.isOnline ? "Online" : "Offline"),
+            widthClassName: "w-24",
+            cell: (row) => (
+                <div className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-full ${row.isOnline ? "bg-green-500" : "bg-gray-400"}`} />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{row.isOnline ? "Online" : "Offline"}</span>
+                </div>
             )
         },
         {

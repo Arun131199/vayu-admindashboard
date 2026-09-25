@@ -91,7 +91,7 @@ export default function Dashboard() {
             <section>
                 <ReusableChart
                     title="Student Trained"
-                    type="bar"
+                    type="area"
                     series={trainedSeries}
                     categories={trainedCategories}
                 />

@@ -14,7 +14,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ username?: string; email: string; requiresOtp?: boolean } | null>;
   verifyLoginOtp: (email: string, otp: string) => Promise<{ username: string; email: string } | null>;
   completeLogin: (userData: { username: string; email: string }) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -135,7 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await api.post("admin/auth/logout");
+    } catch (err) {
+      toast.error(`Logout call failed ${err}`);
+    }
+
     setUser(null);
     setIsAuthenticated(false);
     setPermissions([]);

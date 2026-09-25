@@ -2,7 +2,22 @@ import Chart from "react-apexcharts";
 
 interface ReusableChartProps {
     title?: string;
-    type?: "line" | "bar" | "area" | "donut";
+    type?: | "line"
+    | "area"
+    | "bar"
+    | "pie"
+    | "donut"
+    | "radialBar"
+    | "scatter"
+    | "bubble"
+    | "heatmap"
+    | "candlestick"
+    | "boxPlot"
+    | "radar"
+    | "polarArea"
+    | "rangeBar"
+    | "rangeArea"
+    | "treemap";
     series: any[];
     categories?: string[];
     labels?: string[];

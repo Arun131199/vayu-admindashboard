@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { NavbarProps } from "../../utils/navbarProps";
 import { useAuth } from "../../context/AuthContext";
+import { useBookingNotifications } from "../../hooks/useBookingNotifications";
 
 function formatTimestamp(date: Date) {
     const day = date.getDate().toString().padStart(2, "0");
@@ -17,16 +18,17 @@ export default function Navbar({ data }: NavbarProps) {
     const profile = data ?? { name: "Guest" };
     const navigate = useNavigate();
     const { logout } = useAuth();
+    const location = useLocation()
+
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-    const [notifications, setNotifications] = useState([
-        { id: 1, message: "New message received", time: "2 min ago", read: false },
-        { id: 2, message: "Project update available", time: "1 hour ago", read: false },
-        { id: 3, message: "Meeting in 30 minutes", time: "3 hours ago", read: true },
-    ]);
+    const { notifications, unreadCount, markAsRead, markAllAsRead } = useBookingNotifications();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const notificationRef = useRef<HTMLDivElement>(null);
+
+    const currentPage = location.pathname.split("/").filter(Boolean).pop();
+    const pageTitle = currentPage?.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
     // Update time every minute
     useEffect(() => {
@@ -52,7 +54,7 @@ export default function Navbar({ data }: NavbarProps) {
 
     const timestamp = formatTimestamp(currentTime);
     const initial = profile.name?.slice(0, 1).toUpperCase() ?? "G";
-    const unreadCount = notifications.filter(n => !n.read).length;
+
 
     const handleLogout = () => {
         logout();
@@ -60,10 +62,8 @@ export default function Navbar({ data }: NavbarProps) {
         navigate("/login", { replace: true });
     };
 
-    const handleNotificationClick = (id: number) => {
-        setNotifications(prev =>
-            prev.map(n => n.id === id ? { ...n, read: true } : n)
-        );
+    const handleNotificationClick = (key: string) => {
+        markAsRead(key);
     };
 
     return (
@@ -82,7 +82,7 @@ export default function Navbar({ data }: NavbarProps) {
                 {/* Optional: Breadcrumb navigation */}
                 <div className="hidden md:flex items-center gap-2 text-sm">
                     <span className="text-gray-400">/</span>
-                    <span className="text-gray-600 dark:text-gray-400">Dashboard</span>
+                    <span className="text-gray-600 dark:text-gray-400">{pageTitle}</span>
                 </div>
             </div>
 
@@ -136,19 +136,24 @@ export default function Navbar({ data }: NavbarProps) {
                                 ) : (
                                     notifications.map(notification => (
                                         <div
-                                            key={notification.id}
-                                            onClick={() => handleNotificationClick(notification.id)}
+                                            key={notification.key}
+                                            onClick={() => handleNotificationClick(notification.key)}
                                             className={`p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                                         >
                                             <p className="text-sm text-gray-800 dark:text-gray-200">{notification.message}</p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{notification.time}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                {new Date(notification.timestamp).toLocaleString("en-IN")}
+                                            </p>
                                         </div>
                                     ))
                                 )}
                             </div>
                             <div className="p-2 border-t border-gray-200 dark:border-gray-700">
-                                <button className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 py-1">
-                                    View all notifications
+                                <button
+                                    onClick={() => { markAllAsRead(); navigate("/admin-dashboard/booking_enquiry"); setIsNotificationOpen(false); }}
+                                    className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 py-1"
+                                >
+                                    Mark all as read
                                 </button>
                             </div>
                         </div>
@@ -202,7 +207,12 @@ export default function Navbar({ data }: NavbarProps) {
                                     </svg>
                                     Profile
                                 </button>
-                                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <button
+                                    onClick={() => {
+                                        setIsDropdownOpen(false)
+                                        navigate("../admin-dashboard/web-settings/security")
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
