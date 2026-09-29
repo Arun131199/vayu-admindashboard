@@ -26,6 +26,7 @@ export interface userData {
     name: string;
     email: string;
     role: string;
+    createdAt: string;
     status: string,
     isOnline: boolean;
     permissions: modulePermission[];
@@ -42,10 +43,9 @@ export default function UserManagement() {
         setLoading(true);
         try {
             const data = await getAllCompanyUsers();
-            console.log(data)
             setCompanyUsers(data);
         } catch (err) {
-            console.error("Failed to load company users", err);
+            toast.error(`Failed to load company users ${err}`);
         } finally {
             setLoading(false);
         }
@@ -56,8 +56,9 @@ export default function UserManagement() {
         name: u.name,
         email: u.email,
         role: u.roleName,
+        createdAt: u.createdAt?.slice(0, 10) ?? "",
         status: u.active ? "Active" : "Inactive",
-        isOnline: u.isOnline,   
+        isOnline: u.isOnline,
         permissions: u.permissions.map((p) => ({
             id: p.module,
             module: p.module,
@@ -122,13 +123,19 @@ export default function UserManagement() {
             )
         },
         {
+            key: "createdAt",
+            header: "Created Date",
+            accessor: "createdAt",
+            sortable: true,
+        },
+        {
             key: "isOnline",
             header: "Active",
             accessor: (row) => (row.isOnline ? "Online" : "Offline"),
             widthClassName: "w-24",
             cell: (row) => (
                 <div className="flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-full ${row.isOnline ? "bg-green-500" : "bg-gray-400"}`} />
+                    <span className={`h - 2.5 w - 2.5 rounded - full ${row.isOnline ? "bg-green-500" : "bg-gray-400"}`} />
                     <span className="text-sm text-gray-600 dark:text-gray-400">{row.isOnline ? "Online" : "Offline"}</span>
                 </div>
             )
@@ -139,7 +146,7 @@ export default function UserManagement() {
             accessor: "status",
             sortable: true,
             cell: (row) => (
-                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${row.status === "Active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                <span className={`px - 2 py - 1 rounded - full text - xs font - semibold ${row.status === "Active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                     }`}>
                     {row.status}
                 </span>
@@ -218,6 +225,7 @@ export default function UserManagement() {
                     data={tableData}
                     rowKey={(row) => row.id}
                     columns={columns}
+                    dateFilterAccessor="createdAt"
                     mode="client"
                     loading={loading}
                     tableActionFeatures={tableActionFeatures}

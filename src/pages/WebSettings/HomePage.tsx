@@ -152,11 +152,7 @@ export default function HomePage() {
         }));
     };
 
-    const handleFormInputChange = (
-        id: number,
-        field: keyof Omit<FormInputs, "id">,
-        value: string
-    ) => {
+    const handleFormInputChange = (id: number, field: keyof Omit<FormInputs, "id">, value: string) => {
         setContact((prev) => ({
             ...prev,
             formInputs: prev.formInputs.map((item) =>
@@ -228,7 +224,7 @@ export default function HomePage() {
                 <section>
                     <h1 className="text-2xl dark:text-white font-semibold">Home Page</h1>
                 </section>
-                <section className="border dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
+                <section className="border bg-gray-50 dark:bg-gray-800 dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
                     <h1 className="dark:text-white font-semibold ">Hero Section :</h1>
                     <div className="space-y-6">
                         <div className="space-y-4">
@@ -295,7 +291,7 @@ export default function HomePage() {
                         </div>
                     </div>
                 </section>
-                <section className="border dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
+                <section className="border bg-gray-50 dark:bg-gray-800 dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
                     <h1 className="dark:text-gray-300 font-semibold">
                         Who We Are :
                     </h1>
@@ -341,7 +337,7 @@ export default function HomePage() {
                             <button
                                 type="button"
                                 onClick={addContact}
-                                className="border px-4 py-1 rounded-md cursor-pointer border-gray-600 text-gray-600 font-semibold dark:border-gray-500 dark:text-gray-400 hover:scale-105 transition-transform duration-100"
+                                className="bg-gray-400/10 px-4 py-1 rounded-md cursor-pointer  text-gray-900 dark:text-gray-200 font-semibold dark:border-gray-500  hover:scale-105 transition-transform duration-100"
                             >
                                 + Add Contact
                             </button>
@@ -390,7 +386,7 @@ export default function HomePage() {
                             <button
                                 type="button"
                                 onClick={addAvailable}
-                                className="border px-4 py-1 rounded-md cursor-pointer border-gray-600 text-gray-600 font-semibold dark:border-gray-500 dark:text-gray-400 hover:scale-105 transition-transform duration-100"
+                                className="bg-gray-400/10 px-4 py-1 rounded-md cursor-pointer  text-gray-900 dark:text-gray-200 font-semibold dark:border-gray-500  hover:scale-105 transition-transform duration-100"
                             >
                                 + Add Available
                             </button>
@@ -429,7 +425,7 @@ export default function HomePage() {
                         />
                     </div>
                 </section>
-                <section className="border dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
+                <section className="border bg-gray-50 dark:bg-gray-800 dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
                     <div className="flex items-center justify-between">
                         <h1 className="font-semibold dark:text-gray-200">
                             Scrolling Text
@@ -437,7 +433,7 @@ export default function HomePage() {
                         <button
                             type="button"
                             onClick={addScrollingText}
-                            className="border px-4 py-1 rounded-md cursor-pointer border-gray-600 text-gray-600 font-semibold dark:border-gray-500 dark:text-gray-400 hover:scale-105 transition-transform duration-100"
+                            className="bg-gray-400/10 px-4 py-1 rounded-md cursor-pointer  text-gray-900 dark:text-gray-200 font-semibold dark:border-gray-500  hover:scale-105 transition-transform duration-100"
                         >
                             + Add Text
                         </button>
@@ -481,7 +477,7 @@ export default function HomePage() {
                         />
                     </div>
                 </section>
-                <section className="border dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
+                <section className="border bg-gray-50 dark:bg-gray-800 dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
                     <div className="flex items-center justify-between">
                         <h1 className="text-gray-900 font-semibold dark:text-gray-400">
                             Choosing Us
@@ -489,8 +485,7 @@ export default function HomePage() {
                         <button
                             type="button"
                             onClick={addChooseUs}
-                            className="border flex items-center gap-2 px-4 py-1 rounded-md cursor-pointer border-gray-600 text-gray-600 font-semibold dark:border-gray-500 
-                            dark:text-gray-400 hover:scale-105 transition-transform duration-100"
+                            className="flex items-center gap-1 bg-gray-400/10 px-4 py-1 rounded-md cursor-pointer  text-gray-900 dark:text-gray-200 font-semibold dark:border-gray-500  hover:scale-105 transition-transform duration-100"
                         >
                             <Plus size={16} /> <span>Add Point</span>
                         </button>
@@ -581,7 +576,7 @@ export default function HomePage() {
                     </div>
                 </section>
                 {/* contact form */}
-                <section className="border dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
+                <section className="border bg-gray-50 dark:bg-gray-800 dark:border-gray-700 border-gray-300 rounded-sm p-4 shadow-xl space-y-4">
 
                     <div className="flex items-center justify-between">
                         <h1 className="font-semibold text-gray-800 dark:text-gray-300">
@@ -591,8 +586,7 @@ export default function HomePage() {
                         <button
                             type="button"
                             onClick={addFormInput}
-                            className="border flex items-center gap-2 px-4 py-1 rounded-md cursor-pointer border-gray-600 text-gray-600 font-semibold dark:border-gray-500 
-                            dark:text-gray-400 hover:scale-105 transition-transform duration-100"
+                            className="bg-gray-400/10 px-4 py-1 rounded-md cursor-pointer  text-gray-900 dark:text-gray-200 font-semibold dark:border-gray-500  hover:scale-105 transition-transform duration-100"
                         >
                             + Add Input
                         </button>

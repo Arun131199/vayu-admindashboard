@@ -12,18 +12,19 @@ import {
     deleteTestimonial,
     type TestimonialRow,
 } from "../../service/testimonialApi";
+import AnimatedLoadingSkeleton from "../../component/Skeleton/AnimatedLoadingSkeleton";
 
 export default function Testimonial() {
     const navigate = useNavigate();
     const [searchValue, setSearchValue] = useState("");
     const [testimonials, setTestimonials] = useState<TestimonialRow[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [importing, setImporting] = useState(false);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
 
     const loadTestimonials = async () => {
-        setLoading(true);
+        setLoading(true)
         try {
             const data = await getAllTestimonials();
             setTestimonials(data);
@@ -201,8 +202,8 @@ export default function Testimonial() {
 
             <section>
                 {loading ? (
-                    <div className="flex items-center justify-center min-h-50 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900">
-                        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+                    <div className="w-full">
+                        <AnimatedLoadingSkeleton />
                     </div>
                 ) : filteredTestimonials.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -16,7 +16,6 @@ export default function ViewUser() {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams<{ id: string }>();
-
     const [userRow, setUserRow] = useState<CompanyUserRow | null>(location?.state ?? null);
     const [loading, setLoading] = useState(!location?.state);
     const [confirmation, setConfirmation] = useState(false);
@@ -39,6 +38,7 @@ export default function ViewUser() {
         name: userRow.name,
         email: userRow.email,
         role: userRow.roleName,
+        createdAt: userRow.createdAt?.slice(0, 10) ?? "",
         status: userRow.active ? "Active" : "Inactive",
         isOnline: userRow.isOnline,   // NEW
         permissions: userRow.permissions.map((p) => ({
