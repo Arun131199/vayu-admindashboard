@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext'
 import { Provider } from 'react-redux'
 import store from "./redux/store/store.ts"
 import { Toaster } from "sonner"
+import { Analytics } from "@vercel/analytics/react"
 
 const router = createBrowserRouter(mainRoute)
 
@@ -15,6 +16,7 @@ createRoot(document.getElementById('root')!).render(
     <AuthProvider>
       <Provider store={store}>
         <RouterProvider router={router} />
+        <Analytics />
         <Toaster duration={3000} position='top-right' richColors closeButton />
       </Provider>
     </AuthProvider>
