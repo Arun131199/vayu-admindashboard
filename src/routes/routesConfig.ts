@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, FingerprintPattern, FolderKanban, GalleryThumbnails, GraduationCap, HandPlatter, House, LayoutDashboard, MessageCircleMore, Package, Settings, Shield, User2, Users } from "lucide-react";
+import { Bell, CalendarClock, CalendarDays, ClipboardList, FingerprintPattern, FolderKanban, GalleryThumbnails, GraduationCap, HandPlatter, House, LayoutDashboard, MessageCircleMore, Package, Settings, Shield, User2, Users } from "lucide-react";
 import BookingAndEnquiry from "../pages/BookingAndEnquiry/BookingAndEnquiry";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Products from "../pages/Products/Products";
@@ -12,6 +12,10 @@ import SecuritySettings from "../pages/WebSettings/SecuritySettings";
 import Gallery from "../pages/WebSettings/Gallery";
 import Testimonial from "../pages/WebSettings/Testimonial";
 import Roles from "../pages/Roles/Roles";
+import Calendar from "../pages/Calendar/Calendar";
+import Tasks from "../pages/Tasks/Tasks";
+import Notifications from "../pages/Notifications/Notifications";
+import RpcBatches from "../pages/RpcBatches/RpcBatches";
 
 export const routesConfig = [
   {
@@ -57,6 +61,13 @@ export const routesConfig = [
     moduleKey: "STUDENT",
   },
   {
+    name: "RPC Batches",
+    path: "rpc_batches",
+    icon: CalendarClock,
+    element: RpcBatches,
+    moduleKey: "RPC",
+  },
+  {
     name: "Project & Clients",
     path: "project_and_clients",
     icon: FolderKanban,
@@ -77,6 +88,27 @@ export const routesConfig = [
     element: Roles,
     moduleKey: "ROLE",
   },
+  {
+  name: "Calendar",
+  path: "calendar",
+  icon: CalendarDays,
+  element: Calendar,
+  moduleKey: undefined,
+},
+{
+  name: "Tasks & Follow-ups",
+  path: "tasks",
+  icon: ClipboardList,
+  element: Tasks,
+  moduleKey: undefined,
+},
+{
+  name: "Notifications",
+  path: "notifications",
+  icon: Bell,
+  element: Notifications,
+  moduleKey: undefined,
+},
   {
     name: "Web Settings",
     icon: Settings,

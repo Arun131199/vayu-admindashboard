@@ -21,6 +21,7 @@ interface PopupProps {
     children?: React.ReactNode;
     size?: "sm" | "md" | "lg";
     position?: "center" | "top" | "bottom";
+    zIndex?: number;
     closeOnClickOutside?: boolean;
     closeOnEscape?: boolean;
     showProgressBar?: boolean;
@@ -101,6 +102,7 @@ export default function ConfirmationPopup({
     children,
     size = "md",
     position = "center",
+    zIndex = 50,
     closeOnClickOutside = true,
     closeOnEscape = true,
     showProgressBar = false,
@@ -181,6 +183,7 @@ export default function ConfirmationPopup({
             <Dialog
                 as="div"
                 className="fixed inset-0 z-50"
+                style={{ zIndex }}
                 onClose={handleBackdropClick}
                 initialFocus={cancelButtonRef}
             >

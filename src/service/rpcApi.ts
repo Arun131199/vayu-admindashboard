@@ -9,25 +9,56 @@ export interface AssignedEmployee {
   email: string;
 }
 
+export interface RpcBatchSlot {
+    id: number;
+    batchDate: string;
+    batchDay: string;
+    maxStudents: number;
+    bookedStudents: number;
+    status: string;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
 export interface RpcEnquiryRow {
-  id: number;
-  enrollmentId: string;
-  username: string;
-  email: string;
-  mobile: string;
-  age: string;
-  gender: string;
-  address: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  status: EnrollmentStatus;
-  adminNotes: string;
-  createdAt: string;
-  updatedAt: string;
-  assignedTo?: AssignedEmployee | null;
-  assignedAt?: string | null;
+    id: number;
+    enrollmentId: string;
+
+    username: string;
+    email: string;
+    mobile: string;
+
+    age: string;
+    gender: string;
+
+    address: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+
+    status: string;
+    createdAt: string;
+    updatedAt?: string;
+
+    adminNotes?: string | null;
+
+    batchSlot?: RpcBatchSlot | null;
+
+    // Payment
+    paymentStatus?: string;
+    razorpayOrderId?: string | null;
+    razorpayPaymentId?: string | null;
+    razorpaySignature?: string | null;
+
+    // Documents
+    tenthMarksheetUrl?: string | null;
+    aadhaarCardUrl?: string | null;
+    passportUrl?: string | null;
+
+    assignedTo?: AssignedEmployee | null;
+
+    assignedAt?: string | null;
 }
 
 export interface RemarkRow {
@@ -117,3 +148,4 @@ export const getMyAssignedLeads = async (): Promise<RpcEnquiryRow[]> => {
   const res = await api.get("v1/rpce-enroll/my-leads");
   return res.data?.data ?? [];
 };
+

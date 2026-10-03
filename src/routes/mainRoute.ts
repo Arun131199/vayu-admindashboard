@@ -15,6 +15,10 @@ import AddUser from "../pages/UserManagement/Users/AddUser";
 import Roles from "../pages/Roles/Roles";
 import AddRole from "../pages/Roles/AddRole";
 import Profile from "../pages/Profile/Profile";
+import Calendar from "../pages/Calendar/Calendar";
+import Tasks from "../pages/Tasks/Tasks";
+import Notifications from "../pages/Notifications/Notifications";
+import RpcBatches from "../pages/RpcBatches/RpcBatches";
 
 
 const mainRoute = [
@@ -47,6 +51,10 @@ const mainRoute = [
         ...bookingAndEnquiryRoute,
         ...productRoutes,
         ...studentRoute,
+        {
+          path:"rpc_batches",
+          Component:RpcBatches
+        },
        ...projectClientRoutes,
         {
           path:"user_management",
@@ -76,7 +84,19 @@ const mainRoute = [
         {
           path:"roles/edit_role/:id",
           Component:AddRole
-        }
+        },
+        {
+          path:"calendar",
+          Component:Calendar
+        },
+        {
+          path:"tasks",
+          Component:Tasks
+        },
+        {
+          path:"notifications",
+          Component:Notifications
+        },
         
     ],
   },

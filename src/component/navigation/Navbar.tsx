@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import type { NavbarProps } from "../../utils/navbarProps";
 import { useAuth } from "../../context/AuthContext";
 import { useBookingNotifications } from "../../hooks/useBookingNotifications";
+import GlobalSearch from "./GlobalSearch";
 
 function formatTimestamp(date: Date) {
     const day = date.getDate().toString().padStart(2, "0");
@@ -14,7 +15,7 @@ function formatTimestamp(date: Date) {
     return `${day}-${month}-${year} / ${hours}:${minutes}`;
 }
 
-export default function Navbar({ data, menu }: NavbarProps) {
+export default function Navbar({ data, menu: _menu }: NavbarProps) {
     const profile = data ?? { name: "Guest" };
     const navigate = useNavigate();
     const { logout } = useAuth();
@@ -26,21 +27,6 @@ export default function Navbar({ data, menu }: NavbarProps) {
     const { notifications, unreadCount, markAsRead, markAllAsRead } = useBookingNotifications();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const notificationRef = useRef<HTMLDivElement>(null);
-    const [search, setSearch] = useState("");
-    const searchRef = useRef<HTMLDivElement>(null);
-
-    const searchablePages = (menu ?? []).flatMap((item) =>
-        item.children?.length
-            ? item.children.filter((child) => child.path)
-            : item.path
-                ? [item]
-                : []
-    );
-    const searchResults = search.trim()
-        ? searchablePages.filter((item) =>
-            item.name.toLowerCase().includes(search.trim().toLowerCase())
-        )
-        : [];
 
     const currentPage = location.pathname.split("/").filter(Boolean).pop();
     const pageTitle = currentPage?.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -52,9 +38,6 @@ export default function Navbar({ data, menu }: NavbarProps) {
             }
             if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
                 setIsNotificationOpen(false);
-            }
-            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-                setSearch("");
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -75,10 +58,7 @@ export default function Navbar({ data, menu }: NavbarProps) {
         markAsRead(key);
     };
 
-    const handleSearchResultClick = (path: string) => {
-        navigate(`/admin-dashboard/${path}`.replace(/\/+/g, "/"));
-        setSearch("");
-    };
+   
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -111,7 +91,7 @@ export default function Navbar({ data, menu }: NavbarProps) {
             <div className="flex items-center gap-3">
 
                 {/* Search Bar */}
-                <div className="hidden lg:flex items-center relative" ref={searchRef}>
+                {/* <div className="hidden lg:flex items-center relative" ref={searchRef}>
                     <input
                         type="text"
                         placeholder="Search..."
@@ -142,7 +122,9 @@ export default function Navbar({ data, menu }: NavbarProps) {
                             )}
                         </div>
                     )}
-                </div>
+                </div> */}
+
+                <GlobalSearch />
 
                 {/* Notifications Dropdown */}
                 <div className="relative" ref={notificationRef}>

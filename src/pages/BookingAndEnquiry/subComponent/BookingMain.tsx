@@ -1,4 +1,14 @@
-import { Calculator, CalendarRange, MessageCircleIcon, ShoppingBag, IdCard, type LucideIcon, Calendar, RefreshCw } from "lucide-react";
+import {
+    Calculator,
+    CalendarRange,
+    MessageCircleIcon,
+    ShoppingBag,
+    IdCard,
+    type LucideIcon,
+    Calendar,
+    RefreshCw,
+    FileText,
+} from "lucide-react";
 import StatusCard from "../../../component/Cards/StatusCard";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -489,7 +499,14 @@ export default function BookingMain() {
     ], [assignments]);
 
     const rpcColumns = useMemo<ColumnDef<RpcEnquiryRow>[]>(() => [
-        { key: "enrollmentId", header: "Enquiry ID", sortable: true, accessor: "enrollmentId", widthClassName: "w-32" },
+        {
+            key: "enrollmentId",
+            header: "Enquiry ID",
+            sortable: true,
+            accessor: "enrollmentId",
+            widthClassName: "w-32",
+        },
+
         {
             key: "contact",
             header: "Contact Info",
@@ -497,52 +514,241 @@ export default function BookingMain() {
             widthClassName: "min-w-[220px]",
             cell: (row) => (
                 <div className="flex flex-col">
-                    <span className="font-medium">{row.username}</span>
-                    <span className="text-sm text-gray-500">{row.email}</span>
-                    <span className="text-sm text-gray-500">{row.mobile}</span>
+                    <span className="font-medium">
+                        {row.username}
+                    </span>
+
+                    <span className="text-sm text-gray-500">
+                        {row.email}
+                    </span>
+
+                    <span className="text-sm text-gray-500">
+                        {row.mobile}
+                    </span>
                 </div>
-            )
+            ),
         },
+
         {
             key: "location",
             header: "Location",
             accessor: (row) => `${row.city}, ${row.state}`,
-            widthClassName: "min-w-[180px]"
+            widthClassName: "min-w-[180px]",
         },
-        { key: "age", header: "Age", accessor: "age", widthClassName: "w-20" },
-        { key: "gender", header: "Gender", accessor: "gender", widthClassName: "w-24" },
-        { key: "createdAt", header: "Date", sortable: true, accessor: (row) => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-", widthClassName: "w-40" },
+
+        {
+            key: "age",
+            header: "Age",
+            accessor: "age",
+            widthClassName: "w-20",
+        },
+
+        {
+            key: "gender",
+            header: "Gender",
+            accessor: "gender",
+            widthClassName: "w-24",
+        },
+
+        {
+            key: "batch",
+            header: "Batch",
+            accessor: (row) =>
+                row.batchSlot
+                    ? `${row.batchSlot.batchDate} (${row.batchSlot.batchDay})`
+                    : "Not Selected",
+            widthClassName: "min-w-[180px]",
+            cell: (row) => (
+                row.batchSlot ? (
+                    <div className="flex flex-col">
+                        <span className="font-medium text-gray-900 dark:text-white">
+                            {row.batchSlot.batchDate}
+                        </span>
+
+                        <span className="text-xs text-gray-500">
+                            {row.batchSlot.batchDay}
+                        </span>
+
+                        <span className="text-xs text-gray-500">
+                            {row.batchSlot.bookedStudents}/{row.batchSlot.maxStudents} students
+                        </span>
+                    </div>
+                ) : (
+                    <span className="text-gray-500">
+                        Not Selected
+                    </span>
+                )
+            ),
+        },
+
+        {
+            key: "paymentStatus",
+            header: "Payment",
+            sortable: true,
+            accessor: (row) => row.paymentStatus || "PENDING",
+            widthClassName: "w-32",
+            cell: (row) => {
+                const status = row.paymentStatus?.toUpperCase();
+
+                return (
+                    <span
+                        className={`inline-flex min-w-24 justify-center rounded-full px-3 py-1 text-xs font-semibold ${status === "SUCCESS"
+                                ? "bg-green-100 text-green-700"
+                                : status === "FAILED" || status === "REFUNDED"
+                                    ? "bg-red-100 text-red-700"
+                                    : "bg-yellow-100 text-yellow-700"
+                            }`}
+                    >
+                        {status === "SUCCESS"
+                            ? "SUCCESS"
+                            : status === "FAILED"
+                                ? "FAILED"
+                                : status === "REFUNDED"
+                                    ? "REFUNDED"
+                                    : "PENDING"}
+                    </span>
+                );
+            },
+        },
+
+        {
+            key: "paymentDetails",
+            header: "Payment Details",
+            accessor: (row) => row.razorpayPaymentId || "-",
+            widthClassName: "min-w-[220px]",
+            cell: (row) => (
+                row.razorpayPaymentId ? (
+                    <div className="flex flex-col">
+                        <span className="text-xs text-gray-500">
+                            Order ID
+                        </span>
+
+                        <span className="font-medium text-gray-900 dark:text-white">
+                            {row.razorpayOrderId || "-"}
+                        </span>
+
+                        <span className="text-xs text-gray-500 mt-1">
+                            Payment ID
+                        </span>
+
+                        <span className="text-xs text-gray-700 dark:text-gray-300">
+                            {row.razorpayPaymentId}
+                        </span>
+                    </div>
+                ) : (
+                    <span className="text-gray-500">
+                        No payment
+                    </span>
+                )
+            ),
+        },
+
+        {
+            key: "documents",
+            header: "Documents",
+            accessor: (row) =>
+                [
+                    row.tenthMarksheetUrl,
+                    row.aadhaarCardUrl,
+                    row.passportUrl,
+                ].filter(Boolean).length,
+            widthClassName: "w-36",
+            cell: (row) => {
+                const documents = [
+                    {
+                        label: "10th Marksheet",
+                        url: row.tenthMarksheetUrl ?? undefined,
+                    },
+                    {
+                        label: "Aadhaar",
+                        url: row.aadhaarCardUrl ?? undefined,
+                    },
+                    {
+                        label: "Passport",
+                        url: row.passportUrl ?? undefined,
+                    },
+                ].filter((doc): doc is { label: string; url: string } => Boolean(doc.url));
+
+                return (
+                    <div className="flex flex-col gap-1">
+                        <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                            {documents.length}/3 Uploaded
+                        </span>
+
+                        <div className="flex gap-1 flex-wrap">
+                            {documents.map((doc) => (
+                                <a
+                                    key={doc.label}
+                                    href={doc.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    title={doc.label}
+                                    className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200"
+                                >
+                                    <FileText size={13} />
+                                    {doc.label === "10th Marksheet"
+                                        ? "10th"
+                                        : doc.label}
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                );
+            },
+        },
+
         {
             key: "status",
-            header: "Status",
+            header: "Enrollment Status",
             sortable: true,
             accessor: "status",
-            widthClassName: "w-32",
+            widthClassName: "w-36",
             cell: (row) => (
-                <span className={`inline-flex min-w-20 justify-center rounded-full px-3 py-1 text-xs font-semibold ${enrollmentStatusBadge[row.status] ?? "bg-gray-200 text-gray-700"}`}>
+                <span
+                    className={`inline-flex min-w-24 justify-center rounded-full px-3 py-1 text-xs font-semibold ${enrollmentStatusBadge[row.status] ??
+                        "bg-gray-200 text-gray-700"
+                        }`}
+                >
                     {row.status}
                 </span>
-            )
+            ),
         },
+
+        {
+            key: "createdAt",
+            header: "Date",
+            sortable: true,
+            accessor: (row) =>
+                row.createdAt
+                    ? new Date(row.createdAt).toLocaleDateString()
+                    : "-",
+            widthClassName: "w-32",
+        },
+
         {
             key: "assignedTo",
             header: "Assigned To",
             sortable: true,
-            accessor: (row) => row.assignedTo?.name ?? "Unassigned",
+            accessor: (row) =>
+                row.assignedTo?.name ?? "Unassigned",
             widthClassName: "min-w-[160px]",
-            cell: (row) => (
+            cell: (row) =>
                 row.assignedTo ? (
                     <div className="flex flex-col">
-                        <span className="font-medium text-gray-900 dark:text-white">{row.assignedTo.name}</span>
-                        <span className="text-xs text-gray-500">{row.assignedTo.email}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">
+                            {row.assignedTo.name}
+                        </span>
+
+                        <span className="text-xs text-gray-500">
+                            {row.assignedTo.email}
+                        </span>
                     </div>
                 ) : (
                     <span className="inline-flex justify-center rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-500">
                         Unassigned
                     </span>
-                )
-            )
-        }
+                ),
+        },
     ], []);
 
     const tableActionFeatures: TableActionFeatures = {
@@ -742,132 +948,132 @@ export default function BookingMain() {
                 <section>
                     {!viewingArchived && <>
                         {activeTab === "products" && (
-                        <Table
-                            data={orders.filter((o) => !archivedIds.has(o.id))}
-                            columns={orderColumns}
-                            rowKey={(row) => String(row.id)}
-                            mode="client"
-                            dateFilterAccessor="orderedAt"
-                            loading={loading}
-                            tableActionFeatures={tableActionFeatures}
-                            showRowActions={true}
-                            onRefresh={() => handleRefersh()}
-                            onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "product", data: row } })}
-                            onExportFile={async (format) => { await exportOrders(format.toUpperCase() as "EXCEL" | "PDF" | "CSV"); }}
-                            onImportFile={async (file) => { await importOrders(file); await loadOrders(); }}
-                            onArchiveSelected={async (rows) => {
-                                await archiveRecords("PRODUCT", rows.map((r) => r.id));
-                                await loadArchivedIds("products");
-                            }}
-                            onShowArchive={handleShowArchive}
-                        />
+                            <Table
+                                data={orders.filter((o) => !archivedIds.has(o.id))}
+                                columns={orderColumns}
+                                rowKey={(row) => String(row.id)}
+                                mode="client"
+                                dateFilterAccessor="orderedAt"
+                                loading={loading}
+                                tableActionFeatures={tableActionFeatures}
+                                showRowActions={true}
+                                onRefresh={() => handleRefersh()}
+                                onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "product", data: row } })}
+                                onExportFile={async (format) => { await exportOrders(format.toUpperCase() as "EXCEL" | "PDF" | "CSV"); }}
+                                onImportFile={async (file) => { await importOrders(file); await loadOrders(); }}
+                                onArchiveSelected={async (rows) => {
+                                    await archiveRecords("PRODUCT", rows.map((r) => r.id));
+                                    await loadArchivedIds("products");
+                                }}
+                                onShowArchive={handleShowArchive}
+                            />
                         )}
                         {activeTab === "services" && (
-                        <Table
-                            data={serviceEnrollments.filter((s) => !archivedIds.has(s.id))}
-                            columns={serviceColumns}
-                            rowKey={(row) => String(row.id)}
-                            mode="client"
-                            dateFilterAccessor="bookingDate"
-                            loading={loading}
-                            tableActionFeatures={tableActionFeatures}
-                            showRowActions={true}
-                            onRefresh={() => handleRefersh()}
-                            onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "service", data: row } })}
-                            onExportFile={async (format) => { await exportServiceEnrollments(format.toUpperCase() as "EXCEL" | "PDF" | "CSV"); }}
-                            onImportFile={async (file) => { await importServiceEnrollments(file); await loadServiceEnrollments(); }}
-                            onArchiveSelected={async (rows) => {
-                                await archiveRecords("SERVICE", rows.map((r) => r.id));
-                                await loadArchivedIds("services");
-                            }}
-                            onShowArchive={handleShowArchive}
-                        />
+                            <Table
+                                data={serviceEnrollments.filter((s) => !archivedIds.has(s.id))}
+                                columns={serviceColumns}
+                                rowKey={(row) => String(row.id)}
+                                mode="client"
+                                dateFilterAccessor="bookingDate"
+                                loading={loading}
+                                tableActionFeatures={tableActionFeatures}
+                                showRowActions={true}
+                                onRefresh={() => handleRefersh()}
+                                onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "service", data: row } })}
+                                onExportFile={async (format) => { await exportServiceEnrollments(format.toUpperCase() as "EXCEL" | "PDF" | "CSV"); }}
+                                onImportFile={async (file) => { await importServiceEnrollments(file); await loadServiceEnrollments(); }}
+                                onArchiveSelected={async (rows) => {
+                                    await archiveRecords("SERVICE", rows.map((r) => r.id));
+                                    await loadArchivedIds("services");
+                                }}
+                                onShowArchive={handleShowArchive}
+                            />
                         )}
                         {activeTab === "courses" && (
-                        <Table
-                            data={courseEnrollments.filter((c) => !archivedIds.has(c.id))}
-                            columns={courseColumns}
-                            rowKey={(row) => String(row.id)}
-                            mode="client"
-                            dateFilterAccessor="enrolledAt"
-                            loading={loading}
-                            tableActionFeatures={tableActionFeatures}
-                            showRowActions={true}
-                            onRefresh={() => handleRefersh()}
-                            onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "course", data: row } })}
-                            onExportFile={async (format) => { await exportCourseEnrollments(format.toUpperCase() as "EXCEL" | "PDF" | "CSV"); }}
-                            onImportFile={async (file) => { await importCourseEnrollments(file); await loadCourseEnrollments(); }}
-                            onArchiveSelected={async (rows) => {
-                                await archiveRecords("COURSE", rows.map((row) => row.id));
-                                await loadArchivedIds("courses");
-                            }}
-                            onShowArchive={handleShowArchive}
-                        />
+                            <Table
+                                data={courseEnrollments.filter((c) => !archivedIds.has(c.id))}
+                                columns={courseColumns}
+                                rowKey={(row) => String(row.id)}
+                                mode="client"
+                                dateFilterAccessor="enrolledAt"
+                                loading={loading}
+                                tableActionFeatures={tableActionFeatures}
+                                showRowActions={true}
+                                onRefresh={() => handleRefersh()}
+                                onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "course", data: row } })}
+                                onExportFile={async (format) => { await exportCourseEnrollments(format.toUpperCase() as "EXCEL" | "PDF" | "CSV"); }}
+                                onImportFile={async (file) => { await importCourseEnrollments(file); await loadCourseEnrollments(); }}
+                                onArchiveSelected={async (rows) => {
+                                    await archiveRecords("COURSE", rows.map((row) => row.id));
+                                    await loadArchivedIds("courses");
+                                }}
+                                onShowArchive={handleShowArchive}
+                            />
                         )}
                         {activeTab === "rpc" && (
-                        <Table
-                            data={rpcEnquiries.filter((r) => !archivedIds.has(r.id))}
-                            columns={rpcColumns}
-                            rowKey={(row) => String(row.id)}
-                            mode="client"
-                            dateFilterAccessor="createdAt"
-                            loading={loading}
-                            tableActionFeatures={tableActionFeatures}
-                            showRowActions={true}
-                            onRefresh={() => handleRefersh()}
-                            onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "rpc", data: row } })}
-                            onExportFile={async (format) => {
-                                await exportRpcEnquiries(format.toUpperCase() as "EXCEL" | "PDF" | "CSV");
-                            }}
-                            onImportFile={async (file) => {
-                                await importRpcEnquiries(file);
-                                await loadRpcEnquiries();
-                            }}
-                            onArchiveSelected={async (rows) => {
-                                await archiveRecords("RPC", rows.map((r) => r.id));
-                                await loadArchivedIds("rpc");
-                            }}
-                            onShowArchive={handleShowArchive}
-                        />
+                            <Table
+                                data={rpcEnquiries.filter((r) => !archivedIds.has(r.id))}
+                                columns={rpcColumns}
+                                rowKey={(row) => String(row.id)}
+                                mode="client"
+                                dateFilterAccessor="createdAt"
+                                loading={loading}
+                                tableActionFeatures={tableActionFeatures}
+                                showRowActions={true}
+                                onRefresh={() => handleRefersh()}
+                                onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "rpc", data: row } })}
+                                onExportFile={async (format) => {
+                                    await exportRpcEnquiries(format.toUpperCase() as "EXCEL" | "PDF" | "CSV");
+                                }}
+                                onImportFile={async (file) => {
+                                    await importRpcEnquiries(file);
+                                    await loadRpcEnquiries();
+                                }}
+                                onArchiveSelected={async (rows) => {
+                                    await archiveRecords("RPC", rows.map((r) => r.id));
+                                    await loadArchivedIds("rpc");
+                                }}
+                                onShowArchive={handleShowArchive}
+                            />
                         )}
                         {activeTab === "appointments" && (
-                        <Table
-                            data={appointments.filter((a) => !archivedIds.has(a.id))}
-                            columns={appointmentColumns}
-                            rowKey={(row) => String(row.id)}
-                            mode="client"
-                            dateFilterAccessor="createdAt"
-                            loading={loading}
-                            tableActionFeatures={{ ...tableActionFeatures, showImport: false, showExport: false }}
-                            showRowActions={true}
-                            onRefresh={() => handleRefersh()}
-                            onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "appointment", data: row } })}
-                            onArchiveSelected={async (rows) => {
-                                await archiveRecords("APPOINTMENT", rows.map((r) => r.id));
-                                await loadArchivedIds("appointments");
-                            }}
-                            onShowArchive={handleShowArchive}
-                        />
+                            <Table
+                                data={appointments.filter((a) => !archivedIds.has(a.id))}
+                                columns={appointmentColumns}
+                                rowKey={(row) => String(row.id)}
+                                mode="client"
+                                dateFilterAccessor="createdAt"
+                                loading={loading}
+                                tableActionFeatures={{ ...tableActionFeatures, showImport: false, showExport: false }}
+                                showRowActions={true}
+                                onRefresh={() => handleRefersh()}
+                                onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "appointment", data: row } })}
+                                onArchiveSelected={async (rows) => {
+                                    await archiveRecords("APPOINTMENT", rows.map((r) => r.id));
+                                    await loadArchivedIds("appointments");
+                                }}
+                                onShowArchive={handleShowArchive}
+                            />
                         )}
 
                         {activeTab === "replacements" && (
-                        <Table
-                            data={replacements.filter((r) => !archivedIds.has(r.id))}
-                            columns={replacementColumns}
-                            rowKey={(row) => String(row.id)}
-                            mode="client"
-                            dateFilterAccessor="createdAt"
-                            loading={loading}
-                            tableActionFeatures={{ ...tableActionFeatures, showImport: false, showExport: false }}
-                            showRowActions={true}
-                            onRefresh={() => handleRefersh()}
-                            onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "replacement", data: row } })}
-                            onArchiveSelected={async (rows) => {
-                                await archiveRecords("REPLACEMENT", rows.map((r) => r.id));
-                                await loadArchivedIds("replacements");
-                            }}
-                            onShowArchive={handleShowArchive}
-                        />
+                            <Table
+                                data={replacements.filter((r) => !archivedIds.has(r.id))}
+                                columns={replacementColumns}
+                                rowKey={(row) => String(row.id)}
+                                mode="client"
+                                dateFilterAccessor="createdAt"
+                                loading={loading}
+                                tableActionFeatures={{ ...tableActionFeatures, showImport: false, showExport: false }}
+                                showRowActions={true}
+                                onRefresh={() => handleRefersh()}
+                                onViewRow={(row) => navigate(`../booking_enquiry/view-booking/${row.id}`, { state: { type: "replacement", data: row } })}
+                                onArchiveSelected={async (rows) => {
+                                    await archiveRecords("REPLACEMENT", rows.map((r) => r.id));
+                                    await loadArchivedIds("replacements");
+                                }}
+                                onShowArchive={handleShowArchive}
+                            />
                         )}
                     </>}
                     {viewingArchived ? (

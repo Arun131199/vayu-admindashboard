@@ -30,14 +30,14 @@ export default function Modal({ open, title, children, onClose, size = "md" }: M
             <div className="absolute inset-0 flex items-center justify-center p-4">
                 <div
                     className={[
-                        "w-full",
+                        "w-full max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden",
                         sizeClass,
                         "rounded-xl border border-gray-200 dark:border-gray-700",
                         "bg-white dark:bg-gray-900",
                         "shadow-2xl"
                     ].join(" ")}
                 >
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
                         <div className="font-semibold text-lg dark:text-white">{title}</div>
                         <button
                             className="p-2 cursor-pointer rounded-md border border-gray-200 dark:border-gray-700 dark:text-white"
@@ -47,10 +47,9 @@ export default function Modal({ open, title, children, onClose, size = "md" }: M
                             <X size={16} />
                         </button>
                     </div>
-                    <div className="p-5">{children}</div>
+                    <div className="min-h-0 overflow-y-auto p-5">{children}</div>
                 </div>
             </div>
         </div>
     );
 }
-
